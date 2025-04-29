@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Information index{% endblock %}
+
+{% block body %}
+    <h1>Information index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Title</th>
+                <th>Content</th>
+                <th>IsUrgent</th>
+                <th>PublishedAt</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for information in information %}
+            <tr>
+                <td>{{ information.id }}</td>
+                <td>{{ information.title }}</td>
+                <td>{{ information.content }}</td>
+                <td>{{ information.isUrgent ? 'Yes' : 'No' }}</td>
+                <td>{{ information.publishedAt ? information.publishedAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_information_show', {'id': information.id}) }}">show</a>
+                    <a href="{{ path('app_information_edit', {'id': information.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="6">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_information_new') }}">Create new</a>
+{% endblock %}

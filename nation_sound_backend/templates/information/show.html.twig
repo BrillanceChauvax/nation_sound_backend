@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Information{% endblock %}
+
+{% block body %}
+    <h1>Information</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ information.id }}</td>
+            </tr>
+            <tr>
+                <th>Title</th>
+                <td>{{ information.title }}</td>
+            </tr>
+            <tr>
+                <th>Content</th>
+                <td>{{ information.content }}</td>
+            </tr>
+            <tr>
+                <th>IsUrgent</th>
+                <td>{{ information.isUrgent ? 'Yes' : 'No' }}</td>
+            </tr>
+            <tr>
+                <th>PublishedAt</th>
+                <td>{{ information.publishedAt ? information.publishedAt|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_information_index') }}">back to list</a>
+
+    <a href="{{ path('app_information_edit', {'id': information.id}) }}">edit</a>
+
+    {{ include('information/_delete_form.html.twig') }}
+{% endblock %}

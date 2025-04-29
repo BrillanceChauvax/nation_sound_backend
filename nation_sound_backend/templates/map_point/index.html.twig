@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}MapPoint index{% endblock %}
+
+{% block body %}
+    <h1>MapPoint index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Description</th>
+                <th>Color</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for map_point in map_points %}
+            <tr>
+                <td>{{ map_point.id }}</td>
+                <td>{{ map_point.type }}</td>
+                <td>{{ map_point.name }}</td>
+                <td>{{ map_point.position }}</td>
+                <td>{{ map_point.description }}</td>
+                <td>{{ map_point.color }}</td>
+                <td>
+                    <a href="{{ path('app_map_point_show', {'id': map_point.id}) }}">show</a>
+                    <a href="{{ path('app_map_point_edit', {'id': map_point.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="7">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_map_point_new') }}">Create new</a>
+{% endblock %}

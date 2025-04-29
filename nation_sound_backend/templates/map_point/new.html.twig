@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New MapPoint{% endblock %}
+
+{% block body %}
+    <h1>Create new MapPoint</h1>
+
+    {{ include('map_point/_form.html.twig') }}
+
+    <a href="{{ path('app_map_point_index') }}">back to list</a>
+{% endblock %}
