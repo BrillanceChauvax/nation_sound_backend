@@ -13,7 +13,7 @@ final class MapPointControllerTest extends WebTestCase
     private KernelBrowser $client;
     private EntityManagerInterface $manager;
     private EntityRepository $mapPointRepository;
-    private string $path = '/map/point/';
+    private string $path = '/map/point';
 
     protected function setUp(): void
     {
@@ -31,19 +31,16 @@ final class MapPointControllerTest extends WebTestCase
     public function testIndex(): void
     {
         $this->client->followRedirects();
-        $crawler = $this->client->request('GET', $this->path);
+        $this->client->request('GET', $this->path);
 
         self::assertResponseStatusCodeSame(200);
         self::assertPageTitleContains('MapPoint index');
-
-        // Use the $crawler to perform additional assertions e.g.
-        // self::assertSame('Some text on the page', $crawler->filter('.p')->first());
     }
 
     public function testNew(): void
     {
-        $this->markTestIncomplete();
-        $this->client->request('GET', sprintf('%snew', $this->path));
+        $crawler = $this->client->request('GET', '/map/point/new');
+        $csrfToken = $crawler->filter('input[name="map_point[_token]"]')->attr('value');
 
         self::assertResponseStatusCodeSame(200);
 
@@ -53,48 +50,42 @@ final class MapPointControllerTest extends WebTestCase
             'map_point[position]' => 'Testing',
             'map_point[description]' => 'Testing',
             'map_point[color]' => 'Testing',
+            'map_point[_token]' => $csrfToken,
         ]);
 
         self::assertResponseRedirects($this->path);
-
         self::assertSame(1, $this->mapPointRepository->count([]));
     }
 
     public function testShow(): void
     {
-        $this->markTestIncomplete();
-        $fixture = new MapPoint();
-        $fixture->setType('My Title');
-        $fixture->setName('My Title');
-        $fixture->setPosition('My Title');
-        $fixture->setDescription('My Title');
-        $fixture->setColor('My Title');
-
-        $this->manager->persist($fixture);
+        $mapPoint = new MapPoint();
+        $mapPoint->setType('My Title');
+        $mapPoint->setName('My Title');
+        $mapPoint->setPosition('My Title');
+        $mapPoint->setDescription('My Title');
+        $mapPoint->setColor('My Title');
+        $this->manager->persist($mapPoint);
         $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
-
+        $this->client->request('GET', sprintf('%s/%s', $this->path, $mapPoint->getId()));
         self::assertResponseStatusCodeSame(200);
         self::assertPageTitleContains('MapPoint');
-
-        // Use assertions to check that the properties are properly displayed.
     }
 
     public function testEdit(): void
     {
-        $this->markTestIncomplete();
-        $fixture = new MapPoint();
-        $fixture->setType('Value');
-        $fixture->setName('Value');
-        $fixture->setPosition('Value');
-        $fixture->setDescription('Value');
-        $fixture->setColor('Value');
-
-        $this->manager->persist($fixture);
+        $mapPoint = new MapPoint();
+        $mapPoint->setType('Value');
+        $mapPoint->setName('Value');
+        $mapPoint->setPosition('Value');
+        $mapPoint->setDescription('Value');
+        $mapPoint->setColor('Value');
+        $this->manager->persist($mapPoint);
         $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s/edit', $this->path, $fixture->getId()));
+        $crawler = $this->client->request('GET', sprintf('%s/%s/edit', $this->path, $mapPoint->getId()));
+        $csrfToken = $crawler->filter('input[name="map_point[_token]"]')->attr('value');
 
         $this->client->submitForm('Update', [
             'map_point[type]' => 'Something New',
@@ -102,36 +93,35 @@ final class MapPointControllerTest extends WebTestCase
             'map_point[position]' => 'Something New',
             'map_point[description]' => 'Something New',
             'map_point[color]' => 'Something New',
+            'map_point[_token]' => $csrfToken,
         ]);
 
-        self::assertResponseRedirects('/map/point/');
+        self::assertResponseRedirects('/map/point');
 
-        $fixture = $this->mapPointRepository->findAll();
-
-        self::assertSame('Something New', $fixture[0]->getType());
-        self::assertSame('Something New', $fixture[0]->getName());
-        self::assertSame('Something New', $fixture[0]->getPosition());
-        self::assertSame('Something New', $fixture[0]->getDescription());
-        self::assertSame('Something New', $fixture[0]->getColor());
+        $newMapPoint = $this->mapPointRepository->findAll();
+        self::assertSame('Something New', $newMapPoint[0]->getType());
+        self::assertSame('Something New', $newMapPoint[0]->getName());
+        self::assertSame('Something New', $newMapPoint[0]->getPosition());
+        self::assertSame('Something New', $newMapPoint[0]->getDescription());
+        self::assertSame('Something New', $newMapPoint[0]->getColor());
     }
 
     public function testRemove(): void
     {
-        $this->markTestIncomplete();
-        $fixture = new MapPoint();
-        $fixture->setType('Value');
-        $fixture->setName('Value');
-        $fixture->setPosition('Value');
-        $fixture->setDescription('Value');
-        $fixture->setColor('Value');
-
-        $this->manager->persist($fixture);
+        $mapPoint = new MapPoint();
+        $mapPoint->setType('Value');
+        $mapPoint->setName('Value');
+        $mapPoint->setPosition('Value');
+        $mapPoint->setDescription('Value');
+        $mapPoint->setColor('Value');
+        $this->manager->persist($mapPoint);
         $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
-        $this->client->submitForm('Delete');
+        $crawler = $this->client->request('GET', sprintf('%s/%s', $this->path, $mapPoint->getId()));
+        $csrfToken = $crawler->filter('input[name="_token"]')->attr('value');
+        $this->client->submitForm('Delete', ['_token' => $csrfToken]);
 
-        self::assertResponseRedirects('/map/point/');
+        self::assertResponseRedirects('/map/point');
         self::assertSame(0, $this->mapPointRepository->count([]));
     }
 }

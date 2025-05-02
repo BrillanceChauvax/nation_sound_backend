@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\ArtistRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 #[ORM\Entity(repositoryClass: ArtistRepository::class)]
 class Artist
@@ -19,8 +21,8 @@ class Artist
     #[ORM\Column(length: 255)]
     private ?string $image = null;
 
-    #[ORM\ManyToMany(targetEntity: "Event", mappedBy: "artists")]
-    private ?string $events = null;
+    #[ORM\ManyToMany(targetEntity: Event::class, inversedBy: "artists", cascade: ['persist'])]
+    private Collection $events;
 
     public function getId(): ?int
     {
@@ -58,15 +60,30 @@ class Artist
         return $this;
     }
 
-    public function getEvents(): ?string
+    public function __construct()
+    {
+        $this->events = new ArrayCollection(); 
+    }
+
+    public function getEvents(): Collection
     {
         return $this->events;
     }
 
-    public function setEvents(string $events): static
+    public function addEvent(Event $event): self
     {
-        $this->events = $events;
+        if (!$this->events->contains($event)) {
+            $this->events->add($event); 
+            $event->addArtist($this); // Synchronisation bidirectionnelle
+        }
+        return $this;
+    }
 
+    public function removeEvent(Event $event): self
+    {
+        if ($this->events->removeElement($event)) {
+            $event->removeArtist($this); // Synchronisation bidirectionnelle
+        }
         return $this;
     }
 }

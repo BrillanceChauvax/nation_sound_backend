@@ -5,8 +5,10 @@ namespace App\Tests\Controller;
 use App\Entity\Artist;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Entity\Event;
 
 final class ArtistControllerTest extends WebTestCase
 {
@@ -17,6 +19,7 @@ final class ArtistControllerTest extends WebTestCase
 
     protected function setUp(): void
     {
+        parent::setUp();
         $this->client = static::createClient();
         $this->manager = static::getContainer()->get('doctrine')->getManager();
         $this->artistRepository = $this->manager->getRepository(Artist::class);
@@ -26,100 +29,160 @@ final class ArtistControllerTest extends WebTestCase
         }
 
         $this->manager->flush();
+
+        $schemaTool = new SchemaTool($this->manager);
+        $metadata = $this->manager->getMetadataFactory()->getAllMetadata();
+        $schemaTool->dropSchema($metadata);
+        $schemaTool->createSchema($metadata);
     }
 
     public function testIndex(): void
     {
         $this->client->followRedirects();
-        $crawler = $this->client->request('GET', $this->path);
+        $this->client->request('GET', $this->path);
 
         self::assertResponseStatusCodeSame(200);
         self::assertPageTitleContains('Artist index');
-
-        // Use the $crawler to perform additional assertions e.g.
-        // self::assertSame('Some text on the page', $crawler->filter('.p')->first());
     }
 
     public function testNew(): void
     {
-        //$this->markTestIncomplete();
-        $this->client->request('GET', sprintf('%snew', $this->path));
+        $event = new Event();
+        $event->setTitle('Concert Test');
+        $event->setDate(new \DateTime()); 
+        $event->setStartTime(new \DateTime()); 
+        $event->setDuration(120); 
+        $event->setLocation('Main Stage'); 
+        $event->setCategory('Rock'); 
+        $event->setImage('concert.jpg'); 
+        $this->manager->persist($event);
+        $this->manager->flush();
 
-        self::assertResponseStatusCodeSame(200);
+        $crawler = $this->client->request('GET', '/artist/new');
+        self::assertResponseIsSuccessful(200);
+        self::assertSelectorExists('form[name="artist"]');
 
+        $csrfToken = $crawler->filter('input[name="artist[_token]"]')->attr('value');
+        self::assertNotEmpty($csrfToken, 'CSRF token non trouvé dans le formulaire.');
+        
         $this->client->submitForm('Save', [
-            'artist[name]' => 'Testing',
-            'artist[image]' => 'Testing',
-            'artist[events]' => 'Testing',
+            'artist[name]' => 'Nouvel Artiste',
+            'artist[events]' => [$event->getId()], // Tableau d'IDs
+            'artist[image]' => 'photo.jpg',
+            'artist[_token]' => $csrfToken
         ]);
 
-        self::assertResponseRedirects($this->path);
-
+        self::assertResponseRedirects('/artist');
         self::assertSame(1, $this->artistRepository->count([]));
     }
 
     public function testShow(): void
     {
-        //$this->markTestIncomplete();
-        $fixture = new Artist();
-        $fixture->setName('My Title');
-        $fixture->setImage('My Title');
-        $fixture->setEvents('My Title');
+        $sharedImage = 'concert.jpg';
 
-        $this->manager->persist($fixture);
+        $event = new Event();
+        $event->setTitle('Concert Test');
+        $event->setDate(new \DateTime());
+        $event->setStartTime(new \DateTime()); 
+        $event->setDuration(120); 
+        $event->setLocation('Main Stage'); 
+        $event->setCategory('Rock'); 
+        $event->setImage($sharedImage); 
+        $this->manager->persist($event);
+
+        $artist = new Artist();
+        $artist->setName('Test Artist');
+        $artist->setImage($sharedImage);
+        $artist->addEvent($event); 
+        $this->manager->persist($artist);
         $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
-
+        $this->client->request('GET', $this->path.$artist->getId());
         self::assertResponseStatusCodeSame(200);
         self::assertPageTitleContains('Artist');
-
-        // Use assertions to check that the properties are properly displayed.
     }
 
     public function testEdit(): void
-    {
-        //$this->markTestIncomplete();
-        $fixture = new Artist();
-        $fixture->setName('Value');
-        $fixture->setImage('Value');
-        $fixture->setEvents('Value');
+{
+    // Création d'un événement 
+    $event = new Event();
+    $event->setTitle('Concert Test');
+    $event->setDate(new \DateTime());
+    $event->setStartTime(new \DateTime());
+    $event->setDuration(120);
+    $event->setLocation('Main Stage');
+    $event->setCategory('Rock');
+    $event->setImage('concert.jpg');
+    $this->manager->persist($event);
+    $this->manager->flush();
 
-        $this->manager->persist($fixture);
-        $this->manager->flush();
+    // Création de l'artiste avec relation
+    $artist = new Artist();
+    $artist->setName('Value');
+    $artist->setImage('image.jpg');
+    $artist->addEvent($event); 
+    $this->manager->persist($artist);
+    $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s/edit', $this->path, $fixture->getId()));
+    // Récupération du formulaire d'édition
+    $crawler = $this->client->request('GET', '/artist/'.$artist->getId().'/edit');
+    self::assertSelectorExists('form[name="artist"]');
+    
+    // Extraction du token CSRF
+    $csrfToken = $crawler->filter('input[name="artist[_token]"]')->attr('value');
+    self::assertNotEmpty($csrfToken, 'Le token CSRF est manquant dans le formulaire');
 
-        $this->client->submitForm('Update', [
-            'artist[name]' => 'Something New',
-            'artist[image]' => 'Something New',
-            'artist[events]' => 'Something New',
-        ]);
+    // Soumission du formulaire
+    $this->client->submitForm('Update', [
+        'artist[name]' => 'Nouveau nom',
+        'artist[image]' => 'nouvelle-image.jpg',
+        'artist[events]' => [$event->getId()], // Tableau d'IDs
+        'artist[_token]' => $csrfToken
+    ]);
 
-        self::assertResponseRedirects('/artist/');
+    // Vérifications
+    self::assertResponseRedirects('/artist');
+    $updatedArtist = $this->artistRepository->find($artist->getId());
+    self::assertCount(1, $updatedArtist->getEvents());
+    self::assertSame('Nouveau nom', $updatedArtist->getName());
+}
 
-        $fixture = $this->artistRepository->findAll();
+public function testRemove(): void
+{
+    // Création d'un événement et artiste associé
+    $event = new Event();
+    $event->setTitle('Concert Test');
+    $event->setDate(new \DateTime());
+    $event->setStartTime(new \DateTime());
+    $event->setDuration(120);
+    $event->setLocation('Main Stage');
+    $event->setCategory('Rock');
+    $event->setImage('concert.jpg'); 
+    $this->manager->persist($event);
 
-        self::assertSame('Something New', $fixture[0]->getName());
-        self::assertSame('Something New', $fixture[0]->getImage());
-        self::assertSame('Something New', $fixture[0]->getEvents());
-    }
+    $artist = new Artist();
+    $artist->setName('Artiste à supprimer');
+    $artist->addEvent($event);
+    $artist->setImage('concert.jpg');
+    $this->manager->persist($artist);
+    $this->manager->flush();
 
-    public function testRemove(): void
-    {
-        //$this->markTestIncomplete();
-        $fixture = new Artist();
-        $fixture->setName('Value');
-        $fixture->setImage('Value');
-        $fixture->setEvents('Value');
+    // Extraction du token CSRF depuis la page de détail
+    // Accès à la page de détail de l'artiste
+    $crawler = $this->client->request('GET', '/artist/'.$artist->getId());
+    self::assertResponseIsSuccessful(); // Vérifie que la page est chargée
 
-        $this->manager->persist($fixture);
-        $this->manager->flush();
+    $csrfToken = $crawler->filter('input[name="_token"]')->attr('value');
+    self::assertNotEmpty($csrfToken, 'Le token CSRF est manquant dans le formulaire.');
 
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
-        $this->client->submitForm('Delete');
+    // Soumission de la suppression
+    $this->client->submitForm('Delete', ['_token' => $csrfToken]);
 
-        self::assertResponseRedirects('/artist/');
-        self::assertSame(0, $this->artistRepository->count([]));
-    }
+    // Vérifications
+    self::assertResponseRedirects('/artist');
+    self::assertSame(0, $this->artistRepository->count([]));
+    
+    // Vérifier que l'événement existe toujours (relation ManyToMany)
+    self::assertSame(1, $this->manager->getRepository(Event::class)->count([]));
+}
 }

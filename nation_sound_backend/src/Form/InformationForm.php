@@ -27,4 +27,9 @@ class InformationForm extends AbstractType
             'data_class' => Information::class,
         ]);
     }
+
+    public function getBlockPrefix(): string
+    {
+        return 'information'; 
+    }
 }

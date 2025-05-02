@@ -5,7 +5,7 @@
 {% block body %}
     <h1>Create new Artist</h1>
 
-    {{ include('artist/_form.html.twig') }}
+    {{ include('artist/_form.html.twig', { button_label: 'Save'}) }}
 
     <a href="{{ path('app_artist_index') }}">back to list</a>
 {% endblock %}

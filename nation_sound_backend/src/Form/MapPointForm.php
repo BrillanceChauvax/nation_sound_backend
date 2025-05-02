@@ -26,4 +26,9 @@ class MapPointForm extends AbstractType
             'data_class' => MapPoint::class,
         ]);
     }
+
+    public function getBlockPrefix(): string
+    {
+        return 'map_point'; 
+    }
 }

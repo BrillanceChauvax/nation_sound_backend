@@ -18,8 +18,9 @@ class ArtistForm extends AbstractType
             ->add('image')
             ->add('events', EntityType::class, [
                 'class' => Event::class,
-                'choice_label' => 'id',
+                'choice_label' => 'title',
                 'multiple' => true,
+                'by_reference' => false,
             ])
         ;
     }
@@ -28,6 +29,14 @@ class ArtistForm extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Artist::class,
+            'csrf_protection' => true, 
+            'csrf_field_name' => '_token',
+            'csrf_token_id'   => 'artist_form' 
         ]);
+    }
+
+    public function getBlockPrefix(): string
+    {
+        return 'artist'; 
     }
 }

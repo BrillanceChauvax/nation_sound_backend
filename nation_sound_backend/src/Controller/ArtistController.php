@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\http\attribute\IsGranted;
 
 #[Route('/artist')]
 #[IsGranted("ROLE_ADMIN")]
@@ -34,12 +35,13 @@ final class ArtistController extends AbstractController
             $entityManager->persist($artist);
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_artist_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_artist_index');
         }
 
         return $this->render('artist/new.html.twig', [
             'artist' => $artist,
             'form' => $form,
+            'button_label' => 'Save',
         ]);
     }
 
@@ -66,6 +68,7 @@ final class ArtistController extends AbstractController
         return $this->render('artist/edit.html.twig', [
             'artist' => $artist,
             'form' => $form,
+            'button_label' => 'Update',
         ]);
     }
 

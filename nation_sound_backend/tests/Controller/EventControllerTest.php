@@ -3,6 +3,8 @@
 namespace App\Tests\Controller;
 
 use App\Entity\Event;
+use App\Entity\Artist;
+use App\Entity\MapPoint;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -13,7 +15,7 @@ final class EventControllerTest extends WebTestCase
     private KernelBrowser $client;
     private EntityManagerInterface $manager;
     private EntityRepository $eventRepository;
-    private string $path = '/event/';
+    private string $path = '/event';
 
     protected function setUp(): void
     {
@@ -31,131 +33,172 @@ final class EventControllerTest extends WebTestCase
     public function testIndex(): void
     {
         $this->client->followRedirects();
-        $crawler = $this->client->request('GET', $this->path);
+        $this->client->request('GET', $this->path);
 
         self::assertResponseStatusCodeSame(200);
         self::assertPageTitleContains('Event index');
-
-        // Use the $crawler to perform additional assertions e.g.
-        // self::assertSame('Some text on the page', $crawler->filter('.p')->first());
     }
 
     public function testNew(): void
     {
-        $this->markTestIncomplete();
-        $this->client->request('GET', sprintf('%snew', $this->path));
+        $mapPoint = new MapPoint();
+        $mapPoint->setType('scene'); 
+        $mapPoint->setName('Point 1');
+        $mapPoint->setPosition('A1');
+        $mapPoint->setDescription('text');
+        $mapPoint->setColor('blue');
+        $this->manager->persist($mapPoint);
+        $this->manager->flush();
 
-        self::assertResponseStatusCodeSame(200);
+        $crawler = $this->client->request('GET', '/event/new');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('form[name="event"]');
+
+        $csrfToken = $crawler->filter('input[name="event[_token]"]')->attr('value');
+        self::assertNotEmpty($csrfToken, 'CSRF token manquant dans le formulaire');
 
         $this->client->submitForm('Save', [
-            'event[title]' => 'Testing',
-            'event[date]' => 'Testing',
-            'event[startTime]' => 'Testing',
-            'event[duration]' => 'Testing',
-            'event[location]' => 'Testing',
-            'event[category]' => 'Testing',
-            'event[image]' => 'Testing',
-            'event[artists]' => 'Testing',
-            'event[mapPoint]' => 'Testing',
+            'event[title]' => 'Concert',
+            'event[date]' => '2024-10-10',
+            'event[startTime]' => '18:30',
+            'event[duration]' => 120,
+            'event[location]' => 'Salle 1',
+            'event[category]' => 'Rock',
+            'event[image]' => 'concert.jpg',
+            'event[mapPoint]' => $mapPoint->getId(),
+            'event[_token]' => $csrfToken
         ]);
 
-        self::assertResponseRedirects($this->path);
-
+        self::assertResponseRedirects('/event');
         self::assertSame(1, $this->eventRepository->count([]));
     }
 
     public function testShow(): void
     {
-        $this->markTestIncomplete();
-        $fixture = new Event();
-        $fixture->setTitle('My Title');
-        $fixture->setDate('My Title');
-        $fixture->setStartTime('My Title');
-        $fixture->setDuration('My Title');
-        $fixture->setLocation('My Title');
-        $fixture->setCategory('My Title');
-        $fixture->setImage('My Title');
-        $fixture->setArtists('My Title');
-        $fixture->setMapPoint('My Title');
-
-        $this->manager->persist($fixture);
+        $artist = new Artist();
+        $artist->setName('Test Artist');
+        $artist->setImage('artiste.jpg');
+        $this->manager->persist($artist);
         $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
+        $mapPoint = new MapPoint();
+        $mapPoint->setType('scene'); 
+        $mapPoint->setName('Point 1');
+        $mapPoint->setPosition('A1');
+        $mapPoint->setDescription('text');
+        $mapPoint->setColor('blue');
+        $this->manager->persist($mapPoint);
 
-        self::assertResponseStatusCodeSame(200);
+        $event = new Event();
+        $event->setTitle('TitleTest');
+        $event->setDate(new \DateTime());
+        $event->setStartTime(new \DateTime());
+        $event->setDuration(1);
+        $event->setLocation('LocationTest');
+        $event->setCategory('categoryTest');
+        $event->setImage('concert.jpg');
+        $event->addArtist($artist);
+        $event->setMapPoint($mapPoint);
+
+        $this->manager->persist($event);
+        $this->manager->flush();
+
+        $this->client->request('GET', '/event/'.$event->getId());
+        self::assertResponseIsSuccessful();
         self::assertPageTitleContains('Event');
-
-        // Use assertions to check that the properties are properly displayed.
     }
 
     public function testEdit(): void
     {
-        $this->markTestIncomplete();
-        $fixture = new Event();
-        $fixture->setTitle('Value');
-        $fixture->setDate('Value');
-        $fixture->setStartTime('Value');
-        $fixture->setDuration('Value');
-        $fixture->setLocation('Value');
-        $fixture->setCategory('Value');
-        $fixture->setImage('Value');
-        $fixture->setArtists('Value');
-        $fixture->setMapPoint('Value');
+        $artist = new Artist();
+        $artist->setName('Test Artist');
+        $artist->setImage('artiste.jpg');
+        $this->manager->persist($artist);
+        
+        $mapPoint = new MapPoint();
+        $mapPoint->setType('scene'); 
+        $mapPoint->setName('Point 1');
+        $mapPoint->setPosition('A1');
+        $mapPoint->setDescription('text');
+        $mapPoint->setColor('blue');
+        $this->manager->persist($mapPoint);
 
-        $this->manager->persist($fixture);
+        $event = new Event();
+        $event->setTitle('Value');
+        $event->setDate(new \DateTime());
+        $event->setStartTime(new \DateTime());
+        $event->setDuration(2);
+        $event->setLocation('Value');
+        $event->setCategory('Value');
+        $event->setImage('concert.jpg');
+        $event->addArtist($artist);
+        $event->setMapPoint($mapPoint);
+        $this->manager->persist($event);
         $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s/edit', $this->path, $fixture->getId()));
+        $crawler = $this->client->request('GET', '/event/'.$event->getId().'/edit');
+        $csrfToken = $crawler->filter('input[name="event[_token]"]')->attr('value');
 
         $this->client->submitForm('Update', [
-            'event[title]' => 'Something New',
-            'event[date]' => 'Something New',
-            'event[startTime]' => 'Something New',
-            'event[duration]' => 'Something New',
-            'event[location]' => 'Something New',
-            'event[category]' => 'Something New',
-            'event[image]' => 'Something New',
-            'event[artists]' => 'Something New',
-            'event[mapPoint]' => 'Something New',
+            'event[title]' => 'Nouveau titre',
+            'event[date]' => '2024-11-15',
+            'event[startTime]' => '20:00',
+            'event[duration]' => 180,
+            'event[location]' => 'Nouveau lieu',
+            'event[category]' => 'Nouvelle catégorie',
+            'event[image]' => 'nouveau-concert.jpg',
+            'event[artists]' => [$artist->getId()],
+            'event[mapPoint]' => $mapPoint->getId(),
+            'event[_token]' => $csrfToken
         ]);
 
-        self::assertResponseRedirects('/event/');
+        self::assertResponseRedirects('/event');
 
-        $fixture = $this->eventRepository->findAll();
+        $updatedEvent = $this->eventRepository->find($event->getId());
 
-        self::assertSame('Something New', $fixture[0]->getTitle());
-        self::assertSame('Something New', $fixture[0]->getDate());
-        self::assertSame('Something New', $fixture[0]->getStartTime());
-        self::assertSame('Something New', $fixture[0]->getDuration());
-        self::assertSame('Something New', $fixture[0]->getLocation());
-        self::assertSame('Something New', $fixture[0]->getCategory());
-        self::assertSame('Something New', $fixture[0]->getImage());
-        self::assertSame('Something New', $fixture[0]->getArtists());
-        self::assertSame('Something New', $fixture[0]->getMapPoint());
+        self::assertSame('Nouveau titre', $updatedEvent->getTitle());
+        self::assertSame('2024-11-15', $updatedEvent->getDate()->format('Y-m-d'));
+        self::assertSame('20:00', $updatedEvent->getStartTime()->format('H:i'));
+        self::assertSame(180, $updatedEvent->getDuration());
+        self::assertSame('Nouveau lieu', $updatedEvent->getLocation());
+        self::assertSame('Nouvelle catégorie', $updatedEvent->getCategory());
+        self::assertSame('nouveau-concert.jpg', $updatedEvent->getImage());
+        self::assertCount(1, $updatedEvent->getArtists());
+        self::assertSame($mapPoint->getId(), $updatedEvent->getMapPoint()->getId());
     }
 
     public function testRemove(): void
     {
-        $this->markTestIncomplete();
-        $fixture = new Event();
-        $fixture->setTitle('Value');
-        $fixture->setDate('Value');
-        $fixture->setStartTime('Value');
-        $fixture->setDuration('Value');
-        $fixture->setLocation('Value');
-        $fixture->setCategory('Value');
-        $fixture->setImage('Value');
-        $fixture->setArtists('Value');
-        $fixture->setMapPoint('Value');
+        $artist = new Artist();
+        $artist->setName('Test Artist');
+        $artist->setImage('artiste.jpg');
+        $this->manager->persist($artist);
+        
+        $mapPoint = new MapPoint();
+        $mapPoint->setType('scene'); 
+        $mapPoint->setName('Point 1');
+        $mapPoint->setPosition('A1');
+        $mapPoint->setDescription('text');
+        $mapPoint->setColor('blue');
+        $this->manager->persist($mapPoint);
 
-        $this->manager->persist($fixture);
+        $event = new Event();
+        $event->setTitle('Value');
+        $event->setDate(new \DateTime());
+        $event->setStartTime(new \DateTime());
+        $event->setDuration(2);
+        $event->setLocation('Value');
+        $event->setCategory('Value');
+        $event->setImage('concert.jpg');
+        $event->addArtist($artist);
+        $event->setMapPoint($mapPoint);
+        $this->manager->persist($event);
         $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
+        $this->client->request('GET', sprintf('%s/%s', $this->path, $event->getId()));
         $this->client->submitForm('Delete');
 
-        self::assertResponseRedirects('/event/');
+        self::assertResponseRedirects('/event');
         self::assertSame(0, $this->eventRepository->count([]));
     }
 }

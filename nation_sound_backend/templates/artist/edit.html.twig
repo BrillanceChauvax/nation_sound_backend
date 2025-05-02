@@ -5,7 +5,10 @@
 {% block body %}
     <h1>Edit Artist</h1>
 
-    {{ include('artist/_form.html.twig', {'button_label': 'Update'}) }}
+    <form name="artist" method="post">
+        {{ form_widget(form) }} {# Génère automatiquement le token CSRF #}
+        <button class="btn btn-primary">{{ button_label|default('Update') }}</button>
+    </form>
 
     <a href="{{ path('app_artist_index') }}">back to list</a>
 

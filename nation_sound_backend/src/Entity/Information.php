@@ -17,13 +17,13 @@ class Information
     private ?string $title = null;
 
     #[ORM\Column]
-    private ?text $content = null;
+    private ?string $content = null;
 
     #[ORM\Column]
     private ?bool $isUrgent = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $publishedAt = null;
+    private ?\DateTime $publishedAt = null;
 
     public function getId(): ?int
     {
@@ -49,12 +49,12 @@ class Information
         return $this;
     }
 
-    public function getContent(): ?text
+    public function getContent(): ?string
     {
         return $this->content;
     }
 
-    public function setContent(text $content): static
+    public function setContent(string $content): static
     {
         $this->content = $content;
 
@@ -73,12 +73,12 @@ class Information
         return $this;
     }
 
-    public function getPublishedAt(): ?\DateTimeImmutable
+    public function getPublishedAt(): ?\DateTime
     {
         return $this->publishedAt;
     }
 
-    public function setPublishedAt(\DateTimeImmutable $publishedAt): static
+    public function setPublishedAt(\DateTime $publishedAt): static
     {
         $this->publishedAt = $publishedAt;
 

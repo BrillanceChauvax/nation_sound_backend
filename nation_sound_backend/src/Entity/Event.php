@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Repository\EventRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: EventRepository::class)]
 class Event
@@ -35,12 +37,12 @@ class Event
     #[ORM\Column(length: 255)]
     private ?string $image = null;
 
-    #[ORM\ManyToMany(targetEntity: "Artist", inversedBy: "events")]
+    #[ORM\ManyToMany(targetEntity: Artist::class, inversedBy: "events")]
     #[ORM\JoinTable(name: "event_artist")]
-    private ?string $artists = null;
+    private Collection $artists;
 
     #[ORM\ManyToOne(targetEntity: "MapPoint", inversedBy: "events")]
-    private ?string $mapPoint = null;
+    private ?MapPoint $mapPoint = null;
 
     public function getId(): ?int
     {
@@ -131,34 +133,48 @@ class Event
         return $this->image;
     }
 
-    public function setImage(string $image): static
+    public function setImage(string $image): self
     {
         $this->image = $image;
-
         return $this;
     }
 
-    public function getArtists(): ?string
+    public function __construct()
+    {
+        $this->date = new \DateTime(); 
+        $this->artists = new ArrayCollection();
+    }
+
+    public function getArtists(): Collection
     {
         return $this->artists;
     }
 
-    public function setArtists(string $artists): static
+    public function addArtist(Artist $artist): self
     {
-        $this->artists = $artists;
-
+        if (!$this->artists->contains($artist)) {
+            $this->artists->add($artist);
+            $artist->addEvent($this); // Synchronisation bidirectionnelle
+        }
+        return $this;
+    }
+    
+    public function removeArtist(Artist $artist): self
+    {
+        if ($this->artists->removeElement($artist)) {
+            $artist->removeEvent($this); // Synchronisation bidirectionnelle
+        }
         return $this;
     }
 
-    public function getMapPoint(): ?string
+    public function getMapPoint(): ?MapPoint
     {
         return $this->mapPoint;
     }
 
-    public function setMapPoint(string $mapPoint): static
+    public function setMapPoint(?MapPoint $mapPoint): static
     {
         $this->mapPoint = $mapPoint;
-
         return $this;
     }
 }

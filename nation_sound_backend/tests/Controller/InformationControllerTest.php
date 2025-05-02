@@ -13,7 +13,7 @@ final class InformationControllerTest extends WebTestCase
     private KernelBrowser $client;
     private EntityManagerInterface $manager;
     private EntityRepository $informationRepository;
-    private string $path = '/information/';
+    private string $path = '/information';
 
     protected function setUp(): void
     {
@@ -31,101 +31,95 @@ final class InformationControllerTest extends WebTestCase
     public function testIndex(): void
     {
         $this->client->followRedirects();
-        $crawler = $this->client->request('GET', $this->path);
+        $this->client->request('GET', $this->path);
 
         self::assertResponseStatusCodeSame(200);
         self::assertPageTitleContains('Information index');
-
-        // Use the $crawler to perform additional assertions e.g.
-        // self::assertSame('Some text on the page', $crawler->filter('.p')->first());
     }
 
     public function testNew(): void
     {
-        $this->markTestIncomplete();
-        $this->client->request('GET', sprintf('%snew', $this->path));
-
-        self::assertResponseStatusCodeSame(200);
+        $crawler = $this->client->request('GET', '/information/new');
+        self::assertResponseIsSuccessful();
+        
+        $csrfToken = $crawler->filter('input[name="information[_token]"]')->attr('value');
+        self::assertNotEmpty($csrfToken, 'Le token CSRF est manquant.');
 
         $this->client->submitForm('Save', [
-            'information[title]' => 'Testing',
-            'information[content]' => 'Testing',
-            'information[isUrgent]' => 'Testing',
-            'information[publishedAt]' => 'Testing',
+            'information[title]' => 'Titre test',
+            'information[content]' => 'Contenu test',
+            'information[isUrgent]' => '1', // Case cochée, sinon 0
+            'information[publishedAt]' => '2025-05-01T12:00',
+            'information[_token]' => $csrfToken
         ]);
 
-        self::assertResponseRedirects($this->path);
-
+        self::assertResponseRedirects('/information');
         self::assertSame(1, $this->informationRepository->count([]));
     }
 
     public function testShow(): void
     {
-        $this->markTestIncomplete();
-        $fixture = new Information();
-        $fixture->setTitle('My Title');
-        $fixture->setContent('My Title');
-        $fixture->setIsUrgent('My Title');
-        $fixture->setPublishedAt('My Title');
+        $information = new Information();
+        $information->setTitle('My Title');
+        $information->setContent('My Title');
+        $information->setIsUrgent(true);
+        $information->setPublishedAt(new \DateTime());
 
-        $this->manager->persist($fixture);
+        $this->manager->persist($information);
         $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
-
+        $this->client->request('GET', sprintf('%s/%s', $this->path, $information->getId()));
         self::assertResponseStatusCodeSame(200);
         self::assertPageTitleContains('Information');
-
-        // Use assertions to check that the properties are properly displayed.
     }
 
     public function testEdit(): void
     {
-        $this->markTestIncomplete();
-        $fixture = new Information();
-        $fixture->setTitle('Value');
-        $fixture->setContent('Value');
-        $fixture->setIsUrgent('Value');
-        $fixture->setPublishedAt('Value');
-
-        $this->manager->persist($fixture);
+        $information = new Information();
+        $information->setTitle('Ancien titre');
+        $information->setContent('Ancien contenu');
+        $information->setIsUrgent(false);
+        $information->setPublishedAt(new \DateTime('2024-05-01'));
+        $this->manager->persist($information);
         $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s/edit', $this->path, $fixture->getId()));
+        $crawler = $this->client->request('GET', "/information/{$information->getId()}/edit");
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('form[name="information"]');
+        
+        $csrfToken = $crawler->filter('input[name="information[_token]"]')->attr('value');
 
         $this->client->submitForm('Update', [
-            'information[title]' => 'Something New',
-            'information[content]' => 'Something New',
-            'information[isUrgent]' => 'Something New',
-            'information[publishedAt]' => 'Something New',
+            'information[title]' => 'Nouveau titre',
+            'information[content]' => 'Nouveau contenu',
+            'information[isUrgent]' => '1',
+            'information[publishedAt]' => '2025-05-01T14:30',
+            'information[_token]' => $csrfToken
         ]);
 
-        self::assertResponseRedirects('/information/');
+        self::assertResponseRedirects('/information');
 
-        $fixture = $this->informationRepository->findAll();
+        $updatedInformation = $this->informationRepository->find($information->getId());
 
-        self::assertSame('Something New', $fixture[0]->getTitle());
-        self::assertSame('Something New', $fixture[0]->getContent());
-        self::assertSame('Something New', $fixture[0]->getIsUrgent());
-        self::assertSame('Something New', $fixture[0]->getPublishedAt());
+        self::assertSame('Nouveau titre', $updatedInformation->getTitle());
+        self::assertSame('Nouveau contenu', $updatedInformation->getContent());
+        self::assertTrue($updatedInformation->isUrgent());
+        self::assertEquals('2025-05-01T14:30', $updatedInformation->getPublishedAt()->format('Y-m-d\TH:i'));
     }
 
     public function testRemove(): void
     {
-        $this->markTestIncomplete();
-        $fixture = new Information();
-        $fixture->setTitle('Value');
-        $fixture->setContent('Value');
-        $fixture->setIsUrgent('Value');
-        $fixture->setPublishedAt('Value');
-
-        $this->manager->persist($fixture);
+        $information = new Information();
+        $information->setTitle('Value');
+        $information->setContent('');
+        $information->setIsUrgent(true);
+        $information->setPublishedAt(new \DateTime());
+        $this->manager->persist($information);
         $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
+        $this->client->request('GET', sprintf('%s/%s', $this->path, $information->getId()));
         $this->client->submitForm('Delete');
-
-        self::assertResponseRedirects('/information/');
+        self::assertResponseRedirects('/information');
         self::assertSame(0, $this->informationRepository->count([]));
     }
 }

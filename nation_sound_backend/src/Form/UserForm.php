@@ -6,6 +6,8 @@ use App\Entity\User;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 
 class UserForm extends AbstractType
 {
@@ -13,11 +15,15 @@ class UserForm extends AbstractType
     {
         $builder
             ->add('email')
-            ->add('password')
-            ->add('roles')
-            ->add('createdAt', null, [
-                'widget' => 'single_text',
+            ->add('roles', ChoiceType::class, [
+                'choices' => [
+                    'Admin' => 'ROLE_ADMIN',
+                    'Utilisateur' => 'ROLE_USER',
+                ],
+                'multiple' => true, 
+                'expanded' => true, 
             ])
+            ->add('password', PasswordType::class)
         ;
     }
 
@@ -26,5 +32,10 @@ class UserForm extends AbstractType
         $resolver->setDefaults([
             'data_class' => User::class,
         ]);
+    }
+
+    public function getBlockPrefix(): string
+    {
+        return 'user'; 
     }
 }

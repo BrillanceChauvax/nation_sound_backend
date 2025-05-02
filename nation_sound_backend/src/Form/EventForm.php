@@ -30,6 +30,7 @@ class EventForm extends AbstractType
             ->add('mapPoint', EntityType::class, [
                 'class' => MapPoint::class,
                 'choice_label' => 'id',
+                'placeholder' => 'Choisir un point de carte',
             ])
         ;
     }
@@ -39,5 +40,10 @@ class EventForm extends AbstractType
         $resolver->setDefaults([
             'data_class' => Event::class,
         ]);
+    }
+
+    public function getBlockPrefix(): string
+    {
+        return 'event'; 
     }
 }

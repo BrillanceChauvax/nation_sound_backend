@@ -13,7 +13,7 @@ final class UserControllerTest extends WebTestCase
     private KernelBrowser $client;
     private EntityManagerInterface $manager;
     private EntityRepository $userRepository;
-    private string $path = '/user/';
+    private string $path = '/user';
 
     protected function setUp(): void
     {
@@ -31,101 +31,101 @@ final class UserControllerTest extends WebTestCase
     public function testIndex(): void
     {
         $this->client->followRedirects();
-        $crawler = $this->client->request('GET', $this->path);
+        $this->client->request('GET', $this->path);
 
         self::assertResponseStatusCodeSame(200);
         self::assertPageTitleContains('User index');
-
-        // Use the $crawler to perform additional assertions e.g.
-        // self::assertSame('Some text on the page', $crawler->filter('.p')->first());
     }
 
     public function testNew(): void
     {
-        $this->markTestIncomplete();
-        $this->client->request('GET', sprintf('%snew', $this->path));
+        $crawler = $this->client->request('GET', '/user/new');
+        self::assertResponseIsSuccessful();
 
-        self::assertResponseStatusCodeSame(200);
+        $csrfToken = $crawler->filter('input[name="user[_token]"]')->attr('value');
 
         $this->client->submitForm('Save', [
-            'user[email]' => 'Testing',
-            'user[password]' => 'Testing',
-            'user[roles]' => 'Testing',
-            'user[createdAt]' => 'Testing',
+            'user[email]' => 'test@example.com',
+            'user[password]' => 'password',
+            'user[roles]' => [], 
+            'user[_token]' => $csrfToken
         ]);
 
-        self::assertResponseRedirects($this->path);
-
+        self::assertResponseRedirects('/user');
+        $user = $this->userRepository->findAll()[0];
+        self::assertContains('ROLE_USER', $user->getRoles());
+        self::assertNotNull($user->getCreatedAt());
         self::assertSame(1, $this->userRepository->count([]));
     }
 
     public function testShow(): void
     {
-        $this->markTestIncomplete();
-        $fixture = new User();
-        $fixture->setEmail('My Title');
-        $fixture->setPassword('My Title');
-        $fixture->setRoles('My Title');
-        $fixture->setCreatedAt('My Title');
-
-        $this->manager->persist($fixture);
+        $user = new User();
+        $user->setEmail('test@example.com');
+        $user->setPassword('password');
+        $user->setRoles([]);
+        $user->setCreatedAt(new \DateTimeImmutable());
+        $this->manager->persist($user);
         $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
+        $this->client->request('GET', '/user/'.$user->getId());
 
         self::assertResponseStatusCodeSame(200);
         self::assertPageTitleContains('User');
-
-        // Use assertions to check that the properties are properly displayed.
     }
 
     public function testEdit(): void
     {
-        $this->markTestIncomplete();
-        $fixture = new User();
-        $fixture->setEmail('Value');
-        $fixture->setPassword('Value');
-        $fixture->setRoles('Value');
-        $fixture->setCreatedAt('Value');
-
-        $this->manager->persist($fixture);
+        // Création d'un utilisateur 
+        $user = new User();
+        $user->setEmail('test@example.com');
+        $user->setPassword(password_hash('password', PASSWORD_DEFAULT));
+        $user->setRoles(['ROLE_ADMIN']);
+        $this->manager->persist($user);
         $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s/edit', $this->path, $fixture->getId()));
+        // Récupération du formulaire d'édition
+        $crawler = $this->client->request('GET', '/user/'.$user->getId().'/edit');
+        self::assertResponseIsSuccessful();
+        
+        // Extraction du token CSRF
+        $csrfToken = $crawler->filter('input[name="user[_token]"]')->attr('value');
 
+        // Soumission du formulaire avec données valides
         $this->client->submitForm('Update', [
-            'user[email]' => 'Something New',
-            'user[password]' => 'Something New',
-            'user[roles]' => 'Something New',
-            'user[createdAt]' => 'Something New',
+            'user[email]' => 'updated@example.com',
+            'user[password]' => 'new_password',
+            'user[roles]' => ['ROLE_ADMIN'], 
+            'user[_token]' => $csrfToken 
         ]);
 
-        self::assertResponseRedirects('/user/');
+        // Vérification de la redirection
+        self::assertResponseRedirects('/user');
 
-        $fixture = $this->userRepository->findAll();
+        // Récupération de l'utilisateur mis à jour
+        $updatedUser = $this->userRepository->find($user->getId());
 
-        self::assertSame('Something New', $fixture[0]->getEmail());
-        self::assertSame('Something New', $fixture[0]->getPassword());
-        self::assertSame('Something New', $fixture[0]->getRoles());
-        self::assertSame('Something New', $fixture[0]->getCreatedAt());
+        // Assertions des valeurs modifiées
+        self::assertSame('updated@example.com', $updatedUser->getEmail());
+        self::assertTrue(password_verify('new_password', $updatedUser->getPassword()));
+        self::assertContains('ROLE_ADMIN', $updatedUser->getRoles());
     }
+
 
     public function testRemove(): void
     {
-        $this->markTestIncomplete();
-        $fixture = new User();
-        $fixture->setEmail('Value');
-        $fixture->setPassword('Value');
-        $fixture->setRoles('Value');
-        $fixture->setCreatedAt('Value');
-
-        $this->manager->persist($fixture);
+        $user = new User();
+        $user->setEmail('Value');
+        $user->setPassword('Value');
+        $user->setRoles(['ROLE_ADMIN']);
+        $user->setCreatedAt(new \DateTimeImmutable());
+        $this->manager->persist($user);
         $this->manager->flush();
 
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
+        $this->client->request('GET', '/user/'.$user->getId());
         $this->client->submitForm('Delete');
 
-        self::assertResponseRedirects('/user/');
+        self::assertResponseRedirects('/user');
         self::assertSame(0, $this->userRepository->count([]));
     }
 }
