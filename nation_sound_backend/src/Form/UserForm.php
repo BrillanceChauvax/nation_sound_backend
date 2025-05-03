@@ -8,6 +8,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Form\FormInterface;
 
 class UserForm extends AbstractType
 {
@@ -31,6 +32,13 @@ class UserForm extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => User::class,
+            'validation_groups' => function (FormInterface $form) {
+            $user = $form->getData();
+            if ($user->getId()) {
+                return ['Default', 'update'];
+            }
+            return ['Default', 'registration'];
+        },
         ]);
     }
 

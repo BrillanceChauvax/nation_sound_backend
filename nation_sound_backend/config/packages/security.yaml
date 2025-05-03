@@ -17,10 +17,15 @@ security:
             lazy: true
             provider: app_user_provider
             form_login:
-                login_path: login
-                check_path: login
+                login_path: app_login
+                check_path: app_login
+                default_target_path: app_user_index
+                enable_csrf: true
             logout:
-                path: logout
+                path: app_logout
+                # where to redirect after logout
+                # target: app_any_route
+
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -32,7 +37,8 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
           - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+          - { path: ^/user, roles: ROLE_USER }
+          - { path: ^/login, roles: PUBLIC_ACCESS }
 
 when@test:
     security:

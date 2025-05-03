@@ -6,6 +6,7 @@ use App\Repository\ArtistRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ArtistRepository::class)]
 class Artist
@@ -22,6 +23,7 @@ class Artist
     private ?string $image = null;
 
     #[ORM\ManyToMany(targetEntity: Event::class, inversedBy: "artists", cascade: ['persist'])]
+    #[Assert\Count(min: 1, minMessage: "Un artiste doit être associé à au moins un événement")]
     private Collection $events;
 
     public function getId(): ?int

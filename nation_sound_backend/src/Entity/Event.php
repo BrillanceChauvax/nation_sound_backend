@@ -7,6 +7,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: EventRepository::class)]
 class Event
@@ -43,6 +45,18 @@ class Event
 
     #[ORM\ManyToOne(targetEntity: "MapPoint", inversedBy: "events")]
     private ?MapPoint $mapPoint = null;
+
+    #[Assert\Callback]
+    public function validateEventDates(ExecutionContextInterface $context, mixed $payload): void
+    {
+        $endDate = $this->getDate()->modify('+'.$this->getDuration().' minutes');
+        
+        if ($endDate < new \DateTime()) {
+            $context->buildViolation('La date de fin doit être dans le futur')
+                ->atPath('date')
+                ->addViolation();
+        }
+    }
 
     public function getId(): ?int
     {

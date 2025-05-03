@@ -59,7 +59,7 @@ final class EventControllerTest extends WebTestCase
 
         $this->client->submitForm('Save', [
             'event[title]' => 'Concert',
-            'event[date]' => '2024-10-10',
+            'event[date]' => '2025-10-10',
             'event[startTime]' => '18:30',
             'event[duration]' => 120,
             'event[location]' => 'Salle 1',
@@ -141,7 +141,7 @@ final class EventControllerTest extends WebTestCase
 
         $this->client->submitForm('Update', [
             'event[title]' => 'Nouveau titre',
-            'event[date]' => '2024-11-15',
+            'event[date]' => '2025-11-15',
             'event[startTime]' => '20:00',
             'event[duration]' => 180,
             'event[location]' => 'Nouveau lieu',
@@ -157,7 +157,7 @@ final class EventControllerTest extends WebTestCase
         $updatedEvent = $this->eventRepository->find($event->getId());
 
         self::assertSame('Nouveau titre', $updatedEvent->getTitle());
-        self::assertSame('2024-11-15', $updatedEvent->getDate()->format('Y-m-d'));
+        self::assertSame('2025-11-15', $updatedEvent->getDate()->format('Y-m-d'));
         self::assertSame('20:00', $updatedEvent->getStartTime()->format('H:i'));
         self::assertSame(180, $updatedEvent->getDuration());
         self::assertSame('Nouveau lieu', $updatedEvent->getLocation());
