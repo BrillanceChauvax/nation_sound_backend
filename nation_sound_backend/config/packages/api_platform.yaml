@@ -1,0 +1,16 @@
+api_platform:
+    title: Hello API Platform
+    version: 1.0.0
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin']
+        extra_properties:
+            datetime_format: 'Y-m-d H:i:s'
+    mapping:
+        paths: ['%kernel.project_dir%/src/Entity']
+    formats:
+        json: ['application/json']
+    patch_formats:
+        json: ['application/merge-patch+json']
+

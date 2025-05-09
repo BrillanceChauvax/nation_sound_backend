@@ -13,4 +13,7 @@
     <body>
         {% block body %}{% endblock %}
     </body>
+        {% for flash in app.flashes('success') %}
+            <div class="alert alert-success">{{ flash }}</div>
+        {% endfor %}
 </html>
