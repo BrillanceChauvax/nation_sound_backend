@@ -1,8 +1,10 @@
 framework:
-    router:
         # Configure how to generate URLs in non-HTTP contexts, such as CLI commands.
         # See https://symfony.com/doc/current/routing.html#generating-urls-in-commands
         #default_uri: http://localhost
+    session:
+        cookie_secure: 'auto'  # Devient true automatiquement en HTTPS
+        cookie_samesite: lax
 
 when@prod:
     framework:

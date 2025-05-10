@@ -29,13 +29,14 @@ class RegistrationController extends AbstractController
         UserPasswordHasherInterface $passwordHasher,
         VerifyEmailHelperInterface $verifyEmailHelper,
         MailerInterface $mailer,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
     ): Response {
         $user = new User();
         $form = $this->createForm(RegistrationForm::class, $user);
         $form->handleRequest($request);
     
         if ($form->isSubmitted() && $form->isValid()) {
+
             $user->setPassword(
                 $passwordHasher->hashPassword($user, $form->get('plainPassword')->getData())
             );
@@ -68,6 +69,7 @@ class RegistrationController extends AbstractController
     
         return $this->render('registration/register.html.twig', [
             'registrationForm' => $form->createView(),
+            'turnstile_key' => $_ENV['TURNSTILE_KEY']
         ]);
     }
     
@@ -82,8 +84,8 @@ class RegistrationController extends AbstractController
             // 1. Validation du lien via le token
             $verifyEmailHelper->validateEmailConfirmationFromRequest(
                 $request,
-                (string) $request->query->get('id'), // Récupération depuis les query parameters
-             (string) $request->query->get('email') // Récupération depuis les query parameters
+                (string) $request->query->get('id'), 
+             (string) $request->query->get('email') 
             );
     
             // 2. Récupération de l'utilisateur

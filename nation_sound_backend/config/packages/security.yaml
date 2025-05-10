@@ -17,6 +17,8 @@ security:
             lazy: true
             provider: app_user_provider
             form_login:
+                username_parameter: email
+                password_parameter: password
                 login_path: app_login
                 check_path: app_login
                 default_target_path: app_user_index
@@ -25,7 +27,6 @@ security:
                 path: app_logout
                 # where to redirect after logout
                 # target: app_any_route
-
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -36,9 +37,8 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-          - { path: ^/api, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [OPTIONS] }
+          - { path: ^/, roles: PUBLIC_ACCESS, requires_channel: https }
           - { path: ^/api, roles: ROLE_ADMIN }
-          - { path: ^/admin, roles: ROLE_ADMIN }
           - { path: ^/user, roles: ROLE_USER }
           - { path: ^/login, roles: PUBLIC_ACCESS }
 

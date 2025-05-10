@@ -11,6 +11,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\IsTrue;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\PasswordStrength;
+use PixelOpen\CloudflareTurnstileBundle\Type\TurnstileType;
 
 class RegistrationForm extends AbstractType
 {
@@ -33,16 +35,28 @@ class RegistrationForm extends AbstractType
                 'attr' => ['autocomplete' => 'new-password'],
                 'constraints' => [
                     new NotBlank([
-                        'message' => 'Please enter a password',
+                        'message' => 'Veuillez saisir un mot de passe',
                     ]),
                     new Length([
-                        'min' => 6,
-                        'minMessage' => 'Your password should be at least {{ limit }} characters',
+                        'min' => 12,
+                        'minMessage' => 'Votre mot de passe doit être au minimum de {{ limit }} caractères',
                         // max length allowed by Symfony for security reasons
                         'max' => 20,
                     ]),
+                    new PasswordStrength([
+                            'minScore' => PasswordStrength::STRENGTH_STRONG, // Niveau de sécurité élevé
+                            'message' => 'Le mot de passe est trop faible. Utilisez une combinaison de lettres, chiffres et caractères spéciaux.'
+                    ])
                 ],
             ])
+            ->add('turnstile', TurnstileType::class, [
+                'label' => false,
+                'attr' => [
+                    'data-action' => 'signup', // Optionnel : nom de l'action
+                    'data-theme' => 'light',    // light/dark/auto
+                    'data-language' => 'fr'
+                ],
+            ]);
         ;
     }
 

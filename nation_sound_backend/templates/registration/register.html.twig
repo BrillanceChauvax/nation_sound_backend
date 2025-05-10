@@ -1,13 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Register{% endblock %}
+{% block title %}Inscription{% endblock %}
 
 {% block body %}
     {% for flash_error in app.flashes('verify_email_error') %}
         <div class="alert alert-danger" role="alert">{{ flash_error }}</div>
     {% endfor %}
 
-    <h1>Register</h1>
+    <h1>Inscription</h1>
 
     {{ form_errors(registrationForm) }}
 
@@ -17,9 +17,23 @@
             label: 'Password'
         }) }}
         {{ form_row(registrationForm.agreeTerms) }}
+        {{ form_row(registrationForm.turnstile) }}
 
-        <button type="submit" class="btn">Register</button>
+        <button type="submit" class="btn">S'inscrire</button>
     {{ form_end(registrationForm) }}
+
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script>
+    // Activer le bouton après validation CAPTCHA
+    function onTurnstileSuccess(token) {
+        document.getElementById('submitBtn').disabled = false;
+        document.querySelector('[name="cf-turnstile-response"]').value = token;
+    }
+
+    function onTurnstileError() {
+        document.getElementById('submitBtn').disabled = true;
+    }
+    </script>
 
     {% for flash_error in app.flashes('error') %}
     <div class="alert alert-danger">
