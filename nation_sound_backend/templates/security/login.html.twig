@@ -3,13 +3,20 @@
 {% block title %}Connexion utilisateur{% endblock %}
 
 {% block body %}
-    {{ form_start(form) }}
-        {% if app.user %}
-            <div class="mb-3">
-                Vous êtes connecté sur le compte de {{ app.user.userIdentifier }}, <a href="{{ path('app_logout') }}">Se déconnecter</a>
-            </div>
-        {% endif %}
+    {% if error %}
+        <div class="alert alert-danger">
+            {% if error %}
+                <p>Votre compte n'est pas vérifié.</p>
+                <a href="{{ path('app_resend_verification') }}" class="btn btn-warning">
+                    Renvoyer l'email de vérification
+                </a>
+            {% else %}
+                {{ error.messageKey|trans(error.messageData, 'security')|raw }}
+            {% endif %}
+        </div>
+    {% endif %}
 
+    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
         <h1 class="h3 mb-3 font-weight-normal">Connexion</h1>
 
         {{ form_row(form.email) }}
@@ -21,6 +28,13 @@
             Se connecter
         </button>
     {{ form_end(form) }}
+
+    <div class="mt-4 text-center">
+        <p class="mb-2">Pas encore de compte ?</p>
+        <a href="{{ path('app_register') }}" class="btn btn-outline-primary">
+            Créer un compte
+        </a>
+    </div>
 
     {# Script Cloudflare #}
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>

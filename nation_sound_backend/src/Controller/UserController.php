@@ -2,85 +2,96 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
-use App\Form\LoginForm;
-use App\Repository\UserRepository;
+use App\Form\EmailForm;
+use App\Form\PasswordForm;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Entity\User;
 
-#[Route('/user')]
-final class UserController extends AbstractController
+class UserController extends AbstractController
 {
-    #[Route(name: 'app_user_index', methods: ['GET'])]
-    public function index(UserRepository $userRepository): Response
-    {
-        return $this->render('user/index.html.twig', [
-            'users' => $userRepository->findAll(),
-        ]);
+    public function __construct(
+        private EntityManagerInterface $entityManager
+    ) {
     }
 
-    #[Route('/new', name: 'app_user_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $user = new User();
-        $form = $this->createForm(LoginForm::class, $user);
-        $form->handleRequest($request);
+    #[Route('/user/edit', name: 'app_user_edit')]
+    public function edit(
+        Request $request, 
+        UserPasswordHasherInterface $passwordHasher, 
+        EntityManagerInterface $entityManager
+    ): Response {
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($user);
-            $entityManager->flush();
+        $user = $this->getUser();
+        $freshUser = $this->entityManager->find(User::class, $user->getId());
 
-            return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+        if (!$user) {
+            return $this->redirectToRoute('app_login');
         }
 
-        return $this->render('user/new.html.twig', [
-            'user' => $user,
-            'form' => $form,
-        ]);
-    }
+        if (!$freshUser->isVerified()) {
+        return $this->redirectToRoute('app_resend_verification', ['email' => $freshUser->getEmail()]);
+        }
 
-    #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
-    public function show(User $user): Response
-    {
-        return $this->render('user/show.html.twig', [
-            'user' => $user,
-        ]);
-    }
+        // Formulaire de modification d'email
+        $emailForm = $this->createForm(EmailForm::class);
+        $emailForm->handleRequest($request);
 
-    #[Route('/{id}/edit', name: 'app_user_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, User $user, EntityManagerInterface $entityManager): Response
-    {
-        $form = $this->createForm(LoginForm::class, $user);
-        $form->handleRequest($request);
+        // Formulaire de modification de mot de passe
+        $passwordForm = $this->createForm(PasswordForm::class);
+        $passwordForm->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            if ($form->get('password')->getData()) {
-                $user->setPassword(
-                    password_hash($form->get('password')->getData(), PASSWORD_DEFAULT)
-                );
-            }
+        // Traitement formulaire email
+        if ($emailForm->isSubmitted() && $emailForm->isValid()) {
+            $newEmail = $emailForm->get('newEmail')->getData();
+            
+            // Envoie un email de vérification au nouvel email
+            $this->container->get(SecurityController::class)->sendVerificationEmail($user, 'app_verify_email_update');
+
+            $this->addFlash('info', 'Un email de confirmation a été envoyé à ' . $newEmail);
+            return $this->redirectToRoute('app_user_edit');
+        }
+
+        // Traitement formulaire mot de passe
+        if ($passwordForm->isSubmitted() && $passwordForm->isValid()) {
+            $newPassword = $passwordForm->get('newPassword')->getData();
+            
+            $user->setPassword(
+                $passwordHasher->hashPassword($user, $newPassword)
+            );
+            
             $entityManager->flush();
-
-            return $this->redirectToRoute('app_user_index');
+            $this->addFlash('success', 'Mot de passe mis à jour avec succès');
+            return $this->redirectToRoute('app_user_edit');
         }
 
         return $this->render('user/edit.html.twig', [
-            'user' => $user,
-            'form' => $form,
+            'emailForm' => $emailForm->createView(),
+            'passwordForm' => $passwordForm->createView()
         ]);
     }
 
-    #[Route('/{id}', name: 'app_user_delete', methods: ['POST'])]
-    public function delete(Request $request, User $user, EntityManagerInterface $entityManager): Response
+    #[Route('/user/delete', name: 'app_user_delete', methods: ['POST'])]
+    public function delete(Request $request, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($user);
-            $entityManager->flush();
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->redirectToRoute('app_login');
         }
 
-        return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+        if ($this->isCsrfTokenValid('delete_'.$user->getId(), $request->getPayload()->getString('_token'))) {
+            $this->container->get('security.token_storage')->setToken(null);
+            $entityManager->remove($user);
+            $entityManager->flush();
+            $this->addFlash('info', 'Votre compte a été supprimé avec succès');
+        } else {
+            $this->addFlash('error', 'Token CSRF invalide');
+        }
+
+        return $this->redirectToRoute('app_login', [], Response::HTTP_SEE_OTHER);
     }
 }

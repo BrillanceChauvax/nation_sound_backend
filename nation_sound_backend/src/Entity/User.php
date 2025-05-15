@@ -12,7 +12,7 @@ use ApiPlatform\Metadata\ApiResource;
 #[ApiResource]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\HasLifecycleCallbacks]
-#[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
+#[UniqueEntity(fields: ['email'], message: 'Un compte existe déjà avec ce mail')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -27,7 +27,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(type: 'json')]
-    private array $roles = [];
+    private array $roles = ['ROLE_USER'];
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -37,11 +37,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'boolean')]
     private bool $isVerified = false;
-
-    public function __construct()
-    {
-        $this->roles = ['ROLE_USER']; // Rôle par défaut
-    }
 
     #[ORM\PrePersist]
     public function setCreatedAtValue(): void
@@ -94,7 +89,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roles = $this->roles;
-        $roles[] = 'ROLE_USER'; 
+    
+        // Ajout automatique du rôle vérifié
+        if ($this->isVerified()) {
+            $roles[] = 'ROLE_USER_VERIFIED';
+        } else {
+            $roles = array_diff($roles, ['ROLE_USER_VERIFIED']);
+        }
+        
         return array_unique($roles);
     }
 
@@ -135,5 +137,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->isVerified = $isVerified;
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getEmail(); 
     }
 }

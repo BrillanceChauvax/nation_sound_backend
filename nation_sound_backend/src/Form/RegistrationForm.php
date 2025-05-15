@@ -24,7 +24,7 @@ class RegistrationForm extends AbstractType
                 'mapped' => false,
                 'constraints' => [
                     new IsTrue([
-                        'message' => 'You should agree to our terms.',
+                        'message' => 'Vous devez accepter les conditions d\'utilisation',
                     ]),
                 ],
             ])
@@ -44,7 +44,7 @@ class RegistrationForm extends AbstractType
                         'max' => 20,
                     ]),
                     new PasswordStrength([
-                            'minScore' => PasswordStrength::STRENGTH_STRONG, // Niveau de sécurité élevé
+                            'minScore' => PasswordStrength::STRENGTH_MEDIUM, // Niveau de sécurité élevé
                             'message' => 'Le mot de passe est trop faible. Utilisez une combinaison de lettres, chiffres et caractères spéciaux.'
                     ])
                 ],
@@ -52,7 +52,6 @@ class RegistrationForm extends AbstractType
             ->add('turnstile', TurnstileType::class, [
                 'label' => false,
                 'attr' => [
-                    'data-action' => 'signup', // Optionnel : nom de l'action
                     'data-theme' => 'light',    // light/dark/auto
                     'data-language' => 'fr'
                 ],

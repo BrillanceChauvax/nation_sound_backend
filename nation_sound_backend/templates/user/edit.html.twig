@@ -1,13 +1,81 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Edit User{% endblock %}
+{% block title %}Modifier mon profil{% endblock %}
 
 {% block body %}
-    <h1>Edit User</h1>
+    <h1>Modifier mes informations</h1>
 
-    {{ include('user/_form.html.twig', {'button_label': 'Update'}) }}
+    {# Vérification du statut de vérification d'email #}
+    {% if not app.user.isVerified %}
+        <div class="alert alert-warning mb-4">
+            <p>Votre email n'est pas encore vérifié !</p>
+            <a href="{{ path('app_resend_verification', {'email': app.user.email}) }}" 
+               class="btn btn-sm btn-warning">
+                Renvoyer le lien de vérification
+            </a>
+        </div>
+    {% endif %}
 
-    <a href="{{ path('app_user_index') }}">back to list</a>
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Modifier l'email</h2>
+        </div>
+        <div class="card-body">
+            {{ form_start(emailForm) }}
+                {{ form_row(emailForm.newEmail, {
+                    label: 'Nouvel email',
+                    help: 'Un lien de vérification sera envoyé à cette adresse'
+                }) }}
+                {{ form_row(emailForm.currentPassword, {
+                    label: 'Mot de passe actuel'
+                }) }}
+                <button type="submit" class="btn btn-primary">
+                    Envoyer un Email de vérification
+                </button>
+            {{ form_end(emailForm) }}
+        </div>
+    </div>
 
-    {{ include('user/_delete_form.html.twig') }}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Modifier le mot de passe</h2>
+        </div>
+        <div class="card-body">
+            {{ form_start(passwordForm) }}
+                {{ form_row(passwordForm.currentPassword, {
+                    label: 'Mot de passe actuel'
+                }) }}
+                {{ form_row(passwordForm.newPassword, {
+                    label: 'Nouveau mot de passe'
+                }) }}
+                {{ form_row(passwordForm.confirmPassword, {
+                    label: 'Confirmation du mot de passe'
+                }) }}
+                <button type="submit" class="btn btn-primary">
+                    Modifier le mot de passe
+                </button>
+            {{ form_end(passwordForm) }}
+        </div>
+    </div>
+
+    <div class="mt-4 border-top pt-3">
+        {% include 'user/_delete_form.html.twig' with {'user': app.user} %}
+        
+        <div class="mt-3">
+            <a href="{{ path('app_logout') }}" 
+               class="btn btn-outline-secondary">
+                Déconnexion
+            </a>
+        </div>
+    </div>
+
+    {# Gestion des messages flash #}
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success mt-3">{{ message }}</div>
+    {% endfor %}
+
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger mt-3">{{ message }}</div>
+    {% endfor %}
 {% endblock %}
+
