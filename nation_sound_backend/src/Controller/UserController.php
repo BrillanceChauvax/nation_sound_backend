@@ -27,14 +27,9 @@ class UserController extends AbstractController
     ): Response {
 
         $user = $this->getUser();
-        $freshUser = $this->entityManager->find(User::class, $user->getId());
 
         if (!$user) {
             return $this->redirectToRoute('app_login');
-        }
-
-        if (!$freshUser->isVerified()) {
-        return $this->redirectToRoute('app_resend_verification', ['email' => $freshUser->getEmail()]);
         }
 
         // Formulaire de modification d'email

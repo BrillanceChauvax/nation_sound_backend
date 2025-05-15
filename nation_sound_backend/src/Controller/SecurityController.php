@@ -13,6 +13,7 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use SymfonyCasts\Bundle\VerifyEmail\VerifyEmailHelperInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class SecurityController extends AbstractController
 {
@@ -24,29 +25,30 @@ class SecurityController extends AbstractController
     ) {}
 
     #[Route(path: '/login', name: 'app_login', methods: ['GET', 'POST'])]
-    public function login(AuthenticationUtils $authenticationUtils, Request $request): Response
-    {
-        // Création du formulaire avec l'email prérempli si besoin
-        $form = $this->createForm(LoginForm::class, [
-            'email' => $authenticationUtils->getLastUsername()
-        ]);
+    public function login(
+        AuthenticationUtils $authenticationUtils, 
+        Request $request,
+        UserPasswordHasherInterface $passwordHasher
+    ): Response {
+        $form = $this->createForm(LoginForm::class);
+        $form->handleRequest($request); 
 
-        // Si l'utilisateur est déjà connecté
-        $user = $this->getUser();
-        if ($user instanceof User) {
-            $this->entityManager->refresh($user);
-            if (!$user->isVerified()) {
-                $this->addFlash('error', 'Veuillez vérifier votre email avant de vous connecter.');
-                return $this->redirectToRoute('app_resend_verification', [
-                    'email' => $user->getEmail()
-                ]);
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Récupération des données du formulaire
+            $data = $form->getData();
+            $user = $this->entityManager->getRepository(User::class)
+                ->findOneBy(['email' => $data['email']]);
+
+            if ($user && $passwordHasher->isPasswordValid($user, $data['password'])) {
+                // Redirection après authentification réussie
+                return $this->redirectToRoute('app_user_edit');
             }
-            return $this->redirectToRoute('app_user_edit');
         }
 
         return $this->render('security/login.html.twig', [
             'form' => $form->createView(),
-            'error' => $authenticationUtils->getLastAuthenticationError()
+            'error' => $authenticationUtils->getLastAuthenticationError(),
+            'last_username' => $authenticationUtils->getLastUsername(),
         ]);
     }
 
