@@ -10,14 +10,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use App\Entity\User;
+use App\Service\EmailVerificationService;
 
 class UserController extends AbstractController
 {
     public function __construct(
-        private EntityManagerInterface $entityManager
-    ) {
-    }
+        private EmailVerificationService $emailVerificationService #ici il y avait entitymanagerinterface
+    ) {}
 
     #[Route('/user/edit', name: 'app_user_edit')]
     public function edit(
@@ -45,9 +44,12 @@ class UserController extends AbstractController
             $newEmail = $emailForm->get('newEmail')->getData();
             
             // Envoie un email de vérification au nouvel email
-            $this->container->get(SecurityController::class)->sendVerificationEmail($user, 'app_verify_email_update');
+            $this->emailVerificationService->sendVerificationEmail($user, 'app_verify_email_update', $newEmail);
 
-            $this->addFlash('info', 'Un email de confirmation a été envoyé à ' . $newEmail);
+            // Stockage temporaire en session
+            $request->getSession()->set('pending_email', $newEmail);
+
+            $this->addFlash('success', 'Un email de confirmation a été envoyé à votre nouvelle adresse.');
             return $this->redirectToRoute('app_user_edit');
         }
 
@@ -82,11 +84,11 @@ class UserController extends AbstractController
             $this->container->get('security.token_storage')->setToken(null);
             $entityManager->remove($user);
             $entityManager->flush();
-            $this->addFlash('info', 'Votre compte a été supprimé avec succès');
+            $this->addFlash('success', 'Votre compte a été supprimé avec succès');
         } else {
             $this->addFlash('error', 'Token CSRF invalide');
         }
-
+        
         return $this->redirectToRoute('app_login', [], Response::HTTP_SEE_OTHER);
     }
 }

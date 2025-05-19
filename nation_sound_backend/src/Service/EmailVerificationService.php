@@ -14,23 +14,34 @@ class EmailVerificationService
         private MailerInterface $mailer
     ) {}
 
-    public function sendVerificationEmail(User $user, string $routeName): void
+    public function sendVerificationEmail(User $user, string $routeName, ?string $newEmail = null,?string $template = null): void
     {
+
+        $context = ['id' => (string)$user->getId()];
+    
+        if ($newEmail) {
+        $context['new_email'] = $newEmail;
+        $template = $template ?? 'user/update_email_confirmation.html.twig';
+        } else {
+            $template = $template ?? 'registration/confirmation_email.html.twig';
+        }
+
         $signatureComponents = $this->verifyEmailHelper->generateSignature(
             $routeName,
             (string)$user->getId(),
             $user->getEmail(),
-            ['id' => $user->getId()]
+            $context,
         );
 
         $email = (new TemplatedEmail())
             ->from('noreply@nationsound.com')
             ->to($user->getEmail())
-            ->subject('Confirmation de votre email')
-            ->htmlTemplate('registration/confirmation_email.html.twig')
+            ->subject($newEmail ? 'Confirmation de changement d\'email' : 'Confirmation d\'inscription')
+            ->htmlTemplate($template)
             ->context([
                 'signedUrl' => $signatureComponents->getSignedUrl(),
-                'expiresAt' => $signatureComponents->getExpiresAt()
+                'expiresAt' => $signatureComponents->getExpiresAt(),
+                'newEmail' => $newEmail
             ]);
 
         $this->mailer->send($email);

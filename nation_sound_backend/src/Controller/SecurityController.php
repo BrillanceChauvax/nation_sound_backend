@@ -14,6 +14,7 @@ use SymfonyCasts\Bundle\VerifyEmail\VerifyEmailHelperInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Service\EmailVerificationService;
 
 class SecurityController extends AbstractController
 {
@@ -21,7 +22,8 @@ class SecurityController extends AbstractController
         private EntityManagerInterface $entityManager,
         private VerifyEmailHelperInterface $verifyEmailHelper,
         private MailerInterface $mailer,
-        private UrlGeneratorInterface $urlGenerator
+        private UrlGeneratorInterface $urlGenerator,
+        private EmailVerificationService $emailVerificationService
     ) {}
 
     #[Route(path: '/login', name: 'app_login', methods: ['GET', 'POST'])]

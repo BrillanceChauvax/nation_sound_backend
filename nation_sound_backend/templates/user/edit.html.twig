@@ -4,6 +4,19 @@
 
 {% block body %}
     <h1>Modifier mes informations</h1>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">
+            {{ message }}
+        </div>
+    {% endfor %}
+
     <div class="card mb-4">
         <div class="card-header">
             <h2>Modifier l'email</h2>

@@ -24,14 +24,11 @@ class EmailVerifierController extends AbstractController
         private EmailVerificationService $emailVerifier
     ) {}
 
-    #[Route('/verify-email', name: 'app_verify_email')]
+    #[Route('/verify-email', name: 'app_verify_email', methods: ['GET'])]
     public function verifyUserEmail(Request $request, UserRepository $userRepository): Response
     {
         try {
             $user = $userRepository->find($request->query->get('id'));
-
-            $this->container->get('security.token_storage')->setToken(null);
-            $request->getSession()->invalidate();
             
             $this->verifyEmailHelper->validateEmailConfirmationFromRequest(
                 $request,
@@ -111,5 +108,38 @@ class EmailVerifierController extends AbstractController
         }
 
         return $this->redirectToRoute('app_login');
+    }
+
+    #[Route('/verify-email_update', name: 'app_verify_email_update', methods: ['GET'])]
+    public function verifyUpdatedEmail(Request $request, UserRepository $userRepository): Response
+    {
+        try {
+            $id = $request->query->get('id');
+            $user = $userRepository->find($id);
+
+            // 1. Validation et récupération des composants de signature
+            $this->verifyEmailHelper->validateEmailConfirmationFromRequest(
+                $request,
+                (string)$user->getId(),
+                $user->getEmail()
+            ); 
+
+            // 2. Récupération du nouveau mail depuis le contexte
+            $newEmail = $request->query->get('new_email');
+
+            if ($newEmail) {
+                $user->setEmail($newEmail);
+                $this->entityManager->flush();
+            }
+            
+            $user->setIsVerified(true);
+
+            $this->addFlash('success', 'Email vérifié et mis à jour avec succès !');
+            return $this->redirectToRoute('app_user_edit');
+
+        } catch (VerifyEmailExceptionInterface $e) {
+            $this->addFlash('error', $e->getReason());
+            return $this->redirectToRoute('app_user_edit');
+        }
     }
 }
