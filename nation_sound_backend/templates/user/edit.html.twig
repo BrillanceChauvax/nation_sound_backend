@@ -17,9 +17,17 @@
                     label: 'Nouvel email',
                     help: 'Un lien de vérification sera envoyé à cette adresse'
                 }) }}
-                {{ form_row(emailForm.currentPassword, {
-                    label: 'Mot de passe actuel'
+                <div class="mb-3">
+            {{ form_label(emailForm.currentPassword) }}
+            <div class="input-group">
+                {{ form_widget(emailForm.currentPassword, {
+                    'attr': {'class': 'form-control current-password-input'}
                 }) }}
+                <button type="button" class="btn btn-outline-secondary toggle-password" data-target=".current-password-input">
+                    <i class="fas fa-eye-slash"></i>
+                </button>
+            </div>
+        </div>
                 <button type="submit" class="btn btn-primary">
                     Envoyer un Email de vérification
                 </button>
@@ -28,40 +36,62 @@
     </div>
 
     <div class="card mb-4">
-        <div class="card-header">
-            <h2>Modifier le mot de passe</h2>
+    <div class="card-header">
+        <h2>Modifier le mot de passe</h2>
+    </div>
+    <div class="card-body">
+        {{ form_start(passwordForm) }}
+
+        <div class="mb-3">
+            {{ form_label(passwordForm.currentPassword) }}
+            <div class="input-group">
+                {{ form_widget(passwordForm.currentPassword, {
+                    'attr': {'class': 'form-control current-password-input-pw'}
+                }) }}
+                <button type="button" class="btn btn-outline-secondary toggle-password" data-target=".current-password-input-pw">
+                    <i class="fas fa-eye-slash"></i>
+                </button>
+            </div>
         </div>
-        <div class="card-body">
-            {{ form_start(passwordForm) }}
-            {{ form_row(passwordForm.currentPassword) }}
-            
-            <div class="mb-3">
-                {{ form_label(passwordForm.newPassword.first) }}
+        
+        <div class="mb-3">
+            {{ form_label(passwordForm.newPassword.first) }}
+            <div class="input-group">
                 {{ form_widget(passwordForm.newPassword.first, {
                     'attr': {
                         'class': 'form-control password-input',
                         'oninput': 'checkPasswordMatch()'
                     }
                 }) }}
+                <button type="button" class="btn btn-outline-secondary toggle-password" data-target=".password-input">
+                    <i class="fas fa-eye-slash"></i>
+                </button>
             </div>
+        </div>
 
-            <div class="mb-3">
-                {{ form_label(passwordForm.newPassword.second) }}
+        <div class="mb-3">
+            {{ form_label(passwordForm.newPassword.second) }}
+            <div class="input-group">
                 {{ form_widget(passwordForm.newPassword.second, {
                     'attr': {
                         'class': 'form-control confirm-password-input',
                         'oninput': 'checkPasswordMatch()'
                     }
                 }) }}
-                <div id="password-match-error" class="invalid-feedback" style="display: none;">
-                    Les mots de passe ne correspondent pas
-                </div>
+                <button type="button" class="btn btn-outline-secondary toggle-password" data-target=".confirm-password-input">
+                    <i class="fas fa-eye-slash"></i>
+                </button>
             </div>
+            <div id="password-match-error" class="invalid-feedback" style="display: none;">
+                Les mots de passe ne correspondent pas
+            </div>
+        </div>
 
             <button type="submit" class="btn btn-primary">Modifier le mot de passe</button>
             {{ form_end(passwordForm) }}
         </div>
     </div>
+
 
     <div class="card mb-4">
         <div class="card-header">
@@ -91,6 +121,7 @@
                 errorDiv.style.display = 'block';
             } else {
                 confirm.classList.remove('is-invalid');
+                confirm.classList.add('is-valid');
                 errorDiv.style.display = 'none';
             }
         }
@@ -103,6 +134,17 @@
                 e.preventDefault();
                 checkPasswordMatch();
             }
+        });
+    </script>
+    <script>
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = document.querySelector(btn.dataset.target);
+                const icon = btn.querySelector('i');
+                target.type = (target.type === 'password') ? 'text' : 'password';
+                icon.classList.toggle('fa-eye-slash');
+                icon.classList.toggle('fa-eye');
+            });
         });
     </script>
 {% endblock %}

@@ -15,7 +15,7 @@ use App\Service\EmailVerificationService;
 class UserController extends AbstractController
 {
     public function __construct(
-        private EmailVerificationService $emailVerificationService #ici il y avait entitymanagerinterface
+        private EmailVerificationService $emailVerificationService 
     ) {}
 
     #[Route('/user/edit', name: 'app_user_edit')]

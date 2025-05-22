@@ -1,0 +1,72 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau mot de passe{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h1 class="h3 mb-0">Nouveau mot de passe</h1>
+                    </div>
+                    <div class="card-body">
+                        {{ form_start(resetForm) }}
+                            <div class="mb-3">
+                                {{ form_label(resetForm.plainPassword.first) }}
+                                {{ form_widget(resetForm.plainPassword.first, {
+                                    'attr': {
+                                        'class': 'form-control password-input',
+                                        'oninput': 'checkPasswordMatch()'
+                                    }
+                                }) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(resetForm.plainPassword.second) }}
+                                {{ form_widget(resetForm.plainPassword.second, {
+                                    'attr': {
+                                        'class': 'form-control confirm-password-input',
+                                        'oninput': 'checkPasswordMatch()'
+                                    }
+                                }) }}
+                                <div id="password-match-error" class="invalid-feedback" style="display: none;">
+                                    Les mots de passe ne correspondent pas
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary">Réinitialiser</button>
+                        {{ form_end(resetForm) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function checkPasswordMatch() {
+            const password = document.querySelector('.password-input');
+            const confirm = document.querySelector('.confirm-password-input');
+            const errorDiv = document.getElementById('password-match-error');
+
+            if (password.value !== confirm.value) {
+                confirm.classList.add('is-invalid');
+                errorDiv.style.display = 'block';
+            } else {
+                confirm.classList.remove('is-invalid');
+                confirm.classList.add('is-valid');
+                errorDiv.style.display = 'none';
+            }
+        }
+
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const password = document.querySelector('.password-input').value;
+            const confirm = document.querySelector('.confirm-password-input').value;
+            
+            if (password !== confirm) {
+                e.preventDefault();
+                checkPasswordMatch();
+            }
+        });
+    </script>
+{% endblock %}

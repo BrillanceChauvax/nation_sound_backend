@@ -9,6 +9,8 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use PixelOpen\CloudflareTurnstileBundle\Type\TurnstileType;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+
 
 class LoginForm extends AbstractType
 {
@@ -26,6 +28,11 @@ class LoginForm extends AbstractType
                 'attr' => ['autocomplete' => 'current-password',
                 'class' => 'form-control',
                 ],
+            ])
+            ->add('remember_me', CheckboxType::class, [
+                'mapped' => false,
+                'required' => false,
+                'label' => 'Se souvenir de moi',
             ])
             ->add('turnstile', TurnstileType::class, [
                 'label' => false,

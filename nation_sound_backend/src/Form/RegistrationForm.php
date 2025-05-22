@@ -70,16 +70,6 @@ class RegistrationForm extends AbstractType
                     ])
                 ],
             ])
-            ->add('turnstile', TurnstileType::class, [
-                'label' => false,
-                'attr' => [
-                    'data-theme' => 'light',    // light/dark/auto
-                    'data-language' => 'fr'
-                ],
-                'constraints' => [
-                    new NotBlank(['message' => 'CAPTCHA requis'])
-                ],
-            ]);
         ;
     }
 
