@@ -1,0 +1,21 @@
+{% extends 'email_base.html.twig' %}
+
+{% block title %}Confirmation de votre adresse email{% endblock %}
+
+{% block body %}
+<h1>Confirmation de votre adresse email</h1>
+<p>
+    Merci de vous être inscrit ! Pour activer votre compte, veuillez cliquer sur le bouton ci-dessous :
+</p>
+<p style="text-align: center;">
+    <a href="{{ signedUrl }}" style="display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+        Activer mon compte
+    </a>
+</p>
+<p>
+    Ce lien expire le {{ expiresAt|date('d/m/Y à H:i', 'Europe/Paris') }}.
+</p>
+<p>
+    Si vous n'avez pas créé de compte, veuillez ignorer ce message.
+</p>
+{% endblock %}

@@ -4,11 +4,15 @@ namespace App\Entity;
 
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use ApiPlatform\Metadata\ApiResource;
 
+#[ApiResource]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\HasLifecycleCallbacks]
+#[UniqueEntity(fields: ['email'], message: 'Un compte existe déjà avec ce mail')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -16,20 +20,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255, unique: true)]
-    private ?string $email = null;
+    #[ORM\Column(type: 'string', length: 100, unique: true)]
+    private string $email;
 
     #[ORM\Column]
     private ?string $password = null;
 
     #[ORM\Column(type: 'json')]
-    private array $roles = [];
+    private array $roles = ['ROLE_USER'];
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $isVerified = false;
 
     #[ORM\PrePersist]
     public function setCreatedAtValue(): void
@@ -55,7 +62,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getEmail(): ?string
+    public function getEmail(): string
     {
         return $this->email;
     }
@@ -82,7 +89,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roles = $this->roles;
-        $roles[] = 'ROLE_USER'; 
+    
+        // Ajout automatique du rôle vérifié
+        if ($this->isVerified()) {
+            $roles[] = 'ROLE_USER_VERIFIED';
+        } else {
+            $roles = array_diff($roles, ['ROLE_USER_VERIFIED']);
+        }
+        
         return array_unique($roles);
     }
 
@@ -106,11 +120,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        return $this->email;
     }
 
     public function eraseCredentials(): void
     {
         
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->isVerified;
+    }
+
+    public function setIsVerified(bool $isVerified): self
+    {
+        $this->isVerified = $isVerified;
+        return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getEmail(); 
     }
 }

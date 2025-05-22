@@ -1,0 +1,21 @@
+{% extends 'email_base.html.twig' %}
+
+{% block title %}Confirmation de changement d'adresse email{% endblock %}
+
+{% block body %}
+<h1>Confirmation de votre nouvelle adresse email</h1>
+<p>
+    Vous avez demandé à changer votre adresse email. Pour confirmer cette modification, veuillez cliquer sur le bouton ci-dessous :
+</p>
+<p style="text-align: center;">
+    <a href="{{ signedUrl }}" style="display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+        Confirmer mon nouvel email
+    </a>
+</p>
+<p>
+    Ce lien expire le {{ expiresAt|date('d/m/Y à H:i', 'Europe/Paris') }}.
+</p>
+<p>
+    Si vous n'avez pas demandé ce changement, veuillez ignorer ce message.
+</p>
+{% endblock %}

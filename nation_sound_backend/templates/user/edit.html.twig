@@ -1,13 +1,109 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Edit User{% endblock %}
+{% block title %}Interface utilisateur{% endblock %}
 
 {% block body %}
-    <h1>Edit User</h1>
+    <div class="mb-4 mt-2 mx-3">
+        <h1>Modifier mes informations</h1>
+    </div>
 
-    {{ include('user/_form.html.twig', {'button_label': 'Update'}) }}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Modifier l'email</h2>
+        </div>
+        <div class="card-body">
+            {{ form_start(emailForm) }}
+                {{ form_row(emailForm.newEmail, {
+                    label: 'Nouvel email',
+                    help: 'Un lien de vérification sera envoyé à cette adresse'
+                }) }}
+                {{ form_row(emailForm.currentPassword, {
+                    label: 'Mot de passe actuel'
+                }) }}
+                <button type="submit" class="btn btn-primary">
+                    Envoyer un Email de vérification
+                </button>
+            {{ form_end(emailForm) }}
+        </div>
+    </div>
 
-    <a href="{{ path('app_user_index') }}">back to list</a>
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Modifier le mot de passe</h2>
+        </div>
+        <div class="card-body">
+            {{ form_start(passwordForm) }}
+            {{ form_row(passwordForm.currentPassword) }}
+            
+            <div class="mb-3">
+                {{ form_label(passwordForm.newPassword.first) }}
+                {{ form_widget(passwordForm.newPassword.first, {
+                    'attr': {
+                        'class': 'form-control password-input',
+                        'oninput': 'checkPasswordMatch()'
+                    }
+                }) }}
+            </div>
 
-    {{ include('user/_delete_form.html.twig') }}
+            <div class="mb-3">
+                {{ form_label(passwordForm.newPassword.second) }}
+                {{ form_widget(passwordForm.newPassword.second, {
+                    'attr': {
+                        'class': 'form-control confirm-password-input',
+                        'oninput': 'checkPasswordMatch()'
+                    }
+                }) }}
+                <div id="password-match-error" class="invalid-feedback" style="display: none;">
+                    Les mots de passe ne correspondent pas
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Modifier le mot de passe</button>
+            {{ form_end(passwordForm) }}
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Gestion du compte</h2>
+        </div>
+        <div class="card-body">
+            {% include 'user/_delete_form.html.twig' with {'user': app.user} %}
+            
+            <div class="mt-3">
+                <a href="{{ path('app_logout') }}" 
+                class="btn btn-outline-secondary">
+                    Déconnexion
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {# Script de concordance des mots de passe #}
+    <script>
+        function checkPasswordMatch() {
+            const password = document.querySelector('.password-input');
+            const confirm = document.querySelector('.confirm-password-input');
+            const errorDiv = document.getElementById('password-match-error');
+
+            if (password.value !== confirm.value) {
+                confirm.classList.add('is-invalid');
+                errorDiv.style.display = 'block';
+            } else {
+                confirm.classList.remove('is-invalid');
+                errorDiv.style.display = 'none';
+            }
+        }
+
+        document.querySelector('form[name="password_form"]').addEventListener('submit', function(e) {
+            const password = document.querySelector('.password-input').value;
+            const confirm = document.querySelector('.confirm-password-input').value;
+            
+            if (password !== confirm) {
+                e.preventDefault();
+                checkPasswordMatch();
+            }
+        });
+    </script>
 {% endblock %}
+

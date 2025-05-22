@@ -1,0 +1,117 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block body %}
+
+    {% for flash_error in app.flashes('verify_email_error') %}
+        <div class="alert alert-danger" role="alert">{{ flash_error }}</div>
+    {% endfor %}
+
+    <div class="mb-4 mt-2 mx-3">
+        <h1>Inscription</h1>
+    </div>
+
+    {{ form_errors(registrationForm) }}
+
+    {{ form_start(registrationForm) }}
+        {{ form_row(registrationForm.email) }}
+        
+        <div class="mb-3 password-group">
+        {{ form_label(registrationForm.plainPassword.first) }}
+            <div class="input-group">
+                {{ form_widget(registrationForm.plainPassword.first, {
+                    'attr': {
+                        'class': 'form-control password-input',
+                        'oninput': 'checkPasswordMatch()'
+                    }
+                }) }}
+            </div>
+        </div>
+
+        {# Champ confirmation avec message d'erreur dynamique #}
+        <div class="mb-3">
+            {{ form_label(registrationForm.plainPassword.second) }}
+            <div class="input-group">
+                {{ form_widget(registrationForm.plainPassword.second, {
+                    'attr': {
+                        'class': 'form-control confirm-password-input',
+                        'oninput': 'checkPasswordMatch()'
+                    }
+                }) }}
+            </div>
+            <div id="password-match-error" class="invalid-feedback" style="display: none;">
+                Les mots de passe ne correspondent pas
+            </div>
+        </div>
+
+        {{ form_row(registrationForm.agreeTerms) }}
+        {{ form_row(registrationForm.turnstile) }}
+
+        <button type="submit" class="btn btn-primary">S'inscrire</button>
+    {{ form_end(registrationForm) }}
+
+    {{ include('legal/_cgu.html.twig') }}
+
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script>
+    // Activer le bouton après validation CAPTCHA
+    function onTurnstileSuccess(token) {
+        document.getElementById('submitBtn').disabled = false;
+        document.querySelector('[name="cf-turnstile-response"]').value = token;
+    }
+
+    function onTurnstileError() {
+        document.getElementById('submitBtn').disabled = true;
+    }
+    </script>
+
+    <script>
+            document.querySelectorAll('.toggle-password').forEach(button => {
+            button.addEventListener('click', function() {
+                const target = document.querySelector(this.dataset.target);
+                const icon = this.querySelector('i');
+                
+                target.type = target.type === 'password' ? 'text' : 'password';
+                icon.classList.toggle('fa-eye-slash');
+                icon.classList.toggle('fa-eye');
+            });
+        });
+    </script>
+    <script>
+        function checkPasswordMatch() {
+            const password = document.querySelector('.password-input');
+            const confirm = document.querySelector('.confirm-password-input');
+            const errorDiv = document.getElementById('password-match-error');
+
+            if (password.value !== confirm.value) {
+                confirm.classList.add('is-invalid');
+                errorDiv.style.display = 'block';
+            } else {
+                confirm.classList.remove('is-invalid');
+                confirm.classList.add('is-valid');
+                errorDiv.style.display = 'none';
+            }
+        }
+
+        // Validation au submit
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const password = document.querySelector('.password-input').value;
+            const confirm = document.querySelector('.confirm-password-input').value;
+            
+            if (password !== confirm) {
+                e.preventDefault();
+                checkPasswordMatch();
+            }
+        });
+    </script>
+
+    {% for flash_error in app.flashes('error') %}
+    <div class="alert alert-danger">
+        {{ flash_error }} 
+        <a href="{{ path('app_resend_verification', {'email': app.user.email}) }}">
+            Renvoyer le lien
+        </a>
+    </div>
+    {% endfor %}
+{% endblock %}

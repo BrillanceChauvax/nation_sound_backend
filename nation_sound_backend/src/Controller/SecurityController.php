@@ -2,31 +2,61 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
+use App\Form\LoginForm;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use SymfonyCasts\Bundle\VerifyEmail\VerifyEmailHelperInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Service\EmailVerificationService;
 
 class SecurityController extends AbstractController
 {
-    #[Route(path: '/login', name: 'app_login')]
-    public function login(AuthenticationUtils $authenticationUtils): Response
-    {
-        // get the login error if there is one
-        $error = $authenticationUtils->getLastAuthenticationError();
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private VerifyEmailHelperInterface $verifyEmailHelper,
+        private MailerInterface $mailer,
+        private UrlGeneratorInterface $urlGenerator,
+        private EmailVerificationService $emailVerificationService
+    ) {}
 
-        // last username entered by the user
-        $lastUsername = $authenticationUtils->getLastUsername();
+    #[Route(path: '/login', name: 'app_login', methods: ['GET', 'POST'])]
+    public function login(
+        AuthenticationUtils $authenticationUtils, 
+        Request $request,
+        UserPasswordHasherInterface $passwordHasher
+    ): Response {
+        $form = $this->createForm(LoginForm::class);
+        $form->handleRequest($request); 
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Récupération des données du formulaire
+            $data = $form->getData();
+            $user = $this->entityManager->getRepository(User::class)
+                ->findOneBy(['email' => $data['email']]);
+
+            if ($user && $passwordHasher->isPasswordValid($user, $data['password'])) {
+                // Redirection après authentification réussie
+                return $this->redirectToRoute('app_user_edit');
+            }
+        }
 
         return $this->render('security/login.html.twig', [
-            'last_username' => $lastUsername,
-            'error' => $error,
+            'form' => $form->createView(),
+            'error' => $authenticationUtils->getLastAuthenticationError(),
+            'last_username' => $authenticationUtils->getLastUsername(),
         ]);
     }
 
     #[Route(path: '/logout', name: 'app_logout')]
     public function logout(): void
     {
-        throw new \LogicException('This method can be blank - it will be intercepted by the logout key on your firewall.');
+        throw new \LogicException('Déconnexion');
     }
 }

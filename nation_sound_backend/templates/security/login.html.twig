@@ -1,38 +1,46 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Log in!{% endblock %}
+{% block title %}Connexion utilisateur{% endblock %}
 
 {% block body %}
-    <form method="post">
-        {% if error %}
-            <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-        {% endif %}
 
-        {% if app.user %}
-            <div class="mb-3">
-                You are logged in as {{ app.user.userIdentifier }}, <a href="{{ path('app_logout') }}">Logout</a>
-            </div>
-        {% endif %}
+    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+        <div class="mb-4 mt-2 mx-3">
+            <h1>Connexion</h1>
+        </div>
 
-        <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
-        <label for="username">Email</label>
-        <input type="email" value="{{ last_username }}" name="_username" id="username" class="form-control" autocomplete="email" required autofocus>
-        <label for="password">Password</label>
-        <input type="password" name="_password" id="password" class="form-control" autocomplete="current-password" required>
-        <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
-
-        {#
-            Uncomment this section and add a remember_me option below your firewall to activate remember me functionality.
-            See https://symfony.com/doc/current/security/remember_me.html
-
-            <div class="checkbox mb-3">
-                <input type="checkbox" name="_remember_me" id="_remember_me">
-                <label for="_remember_me">Remember me</label>
-            </div>
-        #}
+        {{ form_row(form.email) }}
+        {{ form_row(form.password) }}
+        {{ form_row(form.turnstile) }}
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
         <button class="btn btn-lg btn-primary" type="submit">
-            Sign in
+            Se connecter
         </button>
-    </form>
+    {{ form_end(form) }}
+
+    <div class="mt-4 text-center">
+        <p class="mb-2">Pas encore de compte ?</p>
+        <a href="{{ path('app_register') }}" class="btn btn-outline-primary">
+            Créer un compte
+        </a>
+    </div>
+
+    {% if error and error.messageKey == 'Veuillez vérifier votre email avant de vous connecter.' %}
+    <div class="alert alert-danger">
+        <p>{{ error.messageKey|trans(error.messageData, 'security')|raw }}</p>
+        <form method="post" action="{{ path('app_resend_verification') }}">
+            <input type="hidden" name="email" value="{{ last_username }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('resend_verification') }}">
+            <button type="submit" class="btn btn-warning">Renvoyer l'email de vérification</button>
+        </form>
+    </div>
+    {% elseif error %}
+        <div class="alert alert-danger">
+            {{ error.messageKey|trans(error.messageData, 'security')|raw }}
+        </div>
+    {% endif %}
+
+    {# Script Cloudflare #}
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 {% endblock %}
