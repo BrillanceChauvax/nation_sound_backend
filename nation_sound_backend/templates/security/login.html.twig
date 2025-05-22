@@ -4,34 +4,10 @@
 
 {% block body %}
 
-    {% for message in app.flashes('success') %}
-        <div class="alert alert-success">
-            {{ message }}
-        </div>
-    {% endfor %}
-
-    {% for message in app.flashes('error') %}
-        <div class="alert alert-danger">
-            {{ message }}
-        </div>
-    {% endfor %}
-
-    {% if error and error.messageKey == 'Veuillez vérifier votre email avant de vous connecter.' %}
-    <div class="alert alert-danger">
-        <p>{{ error.messageKey|trans(error.messageData, 'security')|raw }}</p>
-        <form method="post" action="{{ path('app_resend_verification') }}">
-            <input type="hidden" name="email" value="{{ last_username }}">
-            <input type="hidden" name="_csrf_token" value="{{ csrf_token('resend_verification') }}">
-            <button type="submit" class="btn btn-warning">Renvoyer l'email de vérification</button>
-        </form>
-    </div>
-    {% elseif error %}
-        <div class="alert alert-danger">
-            {{ error.messageKey|trans(error.messageData, 'security')|raw }}
-        </div>
-    {% endif %}
     {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-        <h1 class="h3 mb-3 font-weight-normal">Connexion</h1>
+        <div class="mb-4 mt-2 mx-3">
+            <h1>Connexion</h1>
+        </div>
 
         {{ form_row(form.email) }}
         {{ form_row(form.password) }}
@@ -49,6 +25,21 @@
             Créer un compte
         </a>
     </div>
+
+    {% if error and error.messageKey == 'Veuillez vérifier votre email avant de vous connecter.' %}
+    <div class="alert alert-danger">
+        <p>{{ error.messageKey|trans(error.messageData, 'security')|raw }}</p>
+        <form method="post" action="{{ path('app_resend_verification') }}">
+            <input type="hidden" name="email" value="{{ last_username }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('resend_verification') }}">
+            <button type="submit" class="btn btn-warning">Renvoyer l'email de vérification</button>
+        </form>
+    </div>
+    {% elseif error %}
+        <div class="alert alert-danger">
+            {{ error.messageKey|trans(error.messageData, 'security')|raw }}
+        </div>
+    {% endif %}
 
     {# Script Cloudflare #}
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>

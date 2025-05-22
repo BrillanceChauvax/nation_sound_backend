@@ -4,6 +4,7 @@ namespace App\Form;
 
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
 use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -18,6 +19,9 @@ class PasswordForm extends AbstractType
         $builder
             ->add('currentPassword', PasswordType::class, [
                 'label' => 'Mot de passe actuel',
+                'attr' => ['class' => 'form-control',
+                'autocomplete' => 'current-password',
+                ],
                 'mapped' => false,
                 'constraints' => [
                     new UserPassword([
@@ -25,29 +29,30 @@ class PasswordForm extends AbstractType
                     ])
                 ]
             ])
-            ->add('newPassword', PasswordType::class, [
-                'label' => 'Nouveau mot de passe'
-            ])
-            ->add('confirmPassword', PasswordType::class, [
-                'label' => 'Confirmation du mot de passe',
-                'mapped' => false,
+            ->add('newPassword', RepeatedType::class, [
+                'type' => PasswordType::class,
+                'invalid_message' => 'Les mots de passe doivent correspondre',
+                'first_options' => [
+                    'label' => 'Nouveau mot de passe',
+                    'attr' => ['class' => 'form-control']
+                ],
+                'second_options' => [
+                    'label' => 'Confirmation du mot de passe',
+                    'attr' => ['class' => 'form-control']
+                ],
                 'constraints' => [
-                    new NotBlank(),
-                    new EqualTo([
-                        'propertyPath' => 'newPassword',
-                        'message' => 'Les mots de passe ne correspondent pas'
-                    ]),
+                    new NotBlank(['message' => 'Veuillez saisir un mot de passe']),
                     new Length([
                         'min' => 12,
-                        'minMessage' => 'Votre mot de passe doit être au minimum de {{ limit }} caractères',
-                        // max length allowed by Symfony for security reasons
                         'max' => 20,
+                        'minMessage' => 'Le mot de passe doit contenir au moins {{ limit }} caractères'
                     ]),
                     new PasswordStrength([
-                            'minScore' => PasswordStrength::STRENGTH_MEDIUM, // Niveau de sécurité élevé
-                            'message' => 'Le mot de passe est trop faible. Utilisez une combinaison de lettres, chiffres et caractères spéciaux.'
+                        'minScore' => PasswordStrength::STRENGTH_MEDIUM,
+                        'message' => 'Le mot de passe est trop faible'
                     ])
                 ]
             ]);
+        ;    
     }
 }

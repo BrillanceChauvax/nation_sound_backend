@@ -29,20 +29,7 @@ class RegistrationController extends AbstractController
         $form = $this->createForm(RegistrationForm::class, $user);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted()) {
-
-            if (!$form->isValid()) {
-            // Récupère spécifiquement les erreurs du champ RepeatedType
-            $passwordErrors = $form->get('plainPassword')->getErrors();
-            
-                foreach ($passwordErrors as $error) {
-                    if ($error->getMessage() === 'Les mots de passe doivent correspondre') {
-                        $this->addFlash('error', $error->getMessage());
-                    }
-                }
-            }
-
-            if ($form->isValid()) {
+        if ($form->isSubmitted() && $form->isValid()) {
             // Encode le mot de passe
             $user->setPassword(
                 $passwordHasher->hashPassword(
@@ -64,8 +51,7 @@ class RegistrationController extends AbstractController
                     $entityManager->flush();
                     $this->addFlash('error', 'Erreur lors de l\'envoi de l\'email de confirmation, votre compte n\'a pas été créé. Veuillez réessayer.');
                     return $this->redirectToRoute('app_register');
-                }
-            }    
+            }   
         }
 
         return $this->render('registration/register.html.twig', [

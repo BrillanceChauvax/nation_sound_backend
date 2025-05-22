@@ -17,17 +17,22 @@ class LoginForm extends AbstractType
         $builder
             ->add('email', EmailType::class, [ 
                 'label' => 'Email',
-                'attr' => ['autocomplete' => 'email'],
+                'attr' => ['autocomplete' => 'email',
+                'class' => 'form-control',
+                ],
             ])
             ->add('password', PasswordType::class, [
                 'label' => 'Mot de passe',
-                'attr' => ['autocomplete' => 'current-password']
+                'attr' => ['autocomplete' => 'current-password',
+                'class' => 'form-control',
+                ],
             ])
             ->add('turnstile', TurnstileType::class, [
                 'label' => false,
                 'attr' => [
                     'data-action' => 'login',
-                    'data-language' => 'fr'
+                    'data-language' => 'fr',
+                    'data-theme' => 'light',
                 ],
                 'constraints' => [
                     new NotBlank(['message' => 'CAPTCHA requis'])
@@ -40,7 +45,7 @@ class LoginForm extends AbstractType
     {
         $resolver->setDefaults([
             'csrf_field_name' => '_token',
-            'csrf_token_id' => 'authenticate', // Clé essentielle
+            'csrf_token_id' => 'authenticate',
             'csrf_message' => 'Jeton CSRF invalide'
         ]);
     }

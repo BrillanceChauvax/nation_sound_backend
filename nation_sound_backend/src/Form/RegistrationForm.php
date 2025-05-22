@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\User;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
@@ -20,7 +21,13 @@ class RegistrationForm extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('email')
+            ->add('email', EmailType::class, [
+                'label' => 'Email',
+                'attr' => [
+                    'class' => 'form-control',
+                    'autocomplete' => 'email',
+                ],
+            ])
             ->add('agreeTerms', CheckboxType::class, [
                 'mapped' => false,
                 'label_html' => true,
@@ -37,8 +44,16 @@ class RegistrationForm extends AbstractType
                 'invalid_message' => 'Les mots de passe doivent correspondre',
                 'options' => ['attr' => ['class' => 'newPassword']],
                 'required' => true,
-                'first_options'  => ['label' => 'Mot de passe',],
-                'second_options' => ['label' => 'Confirmation du mot de passe'],
+                'first_options' => [
+                    'label' => 'Mot de passe',
+                    'attr' => ['class' => 'form-control',
+                    'autocomplete' => 'current-password',
+                    ]
+                ],
+                'second_options' => [
+                    'label' => 'Confirmation du mot de passe',
+                    'attr' => ['class' => 'form-control']
+                ],
                 'constraints' => [
                     new NotBlank([
                         'message' => 'Veuillez saisir un mot de passe',
@@ -60,6 +75,9 @@ class RegistrationForm extends AbstractType
                 'attr' => [
                     'data-theme' => 'light',    // light/dark/auto
                     'data-language' => 'fr'
+                ],
+                'constraints' => [
+                    new NotBlank(['message' => 'CAPTCHA requis'])
                 ],
             ]);
         ;
